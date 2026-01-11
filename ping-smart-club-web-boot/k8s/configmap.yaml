@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ping-smart-club-config
+  namespace: default
+data:
+  db.name: "ping_smart_club"
+  db.host: "mysql-service"
+  db.port: "3306"
+  redis.host: "redis-service"
+  redis.port: "6379"
+  redis.database: "0"
+  rabbitmq.host: "rabbitmq-service"
+  rabbitmq.port: "5672"
+  rabbitmq.virtual-host: "/"
