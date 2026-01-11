@@ -120,6 +120,29 @@ logging:
     max-size: 10MB
     max-history: 30
 
+# SpringDoc OpenAPI (Swagger) 配置
+springdoc:
+  api-docs:
+    # API 文档路径
+    path: /v3/api-docs
+    # 是否启用 API 文档
+    enabled: true
+  swagger-ui:
+    # Swagger UI 路径
+    path: /swagger-ui.html
+    # 是否启用 Swagger UI
+    enabled: true
+    # 显示操作ID
+    operations-sorter: method
+    # 显示标签顺序
+    tags-sorter: alpha
+    # 是否显示请求耗时
+    display-request-duration: true
+    # 默认展开深度
+    default-model-expand-depth: 1
+    # 默认模型展开深度
+    default-model-render-depth: 3
+
 # Spring Security 配置（可根据需要调整）
 # security:
 #   user:
