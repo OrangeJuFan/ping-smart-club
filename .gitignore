@@ -13,3 +13,5 @@ pingsrc/static/audio/tineng/debug.log
 
 # 后端git忽略
 
+
+logs/
