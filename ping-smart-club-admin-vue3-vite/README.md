@@ -1,5 +1,166 @@
-# Vue 3 + Vite
+# Ping Smart Club Admin (Vue 3 + Vite)
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+> 乒乓智能俱乐部后台管理系统 - 基于 Vue 3 + Vite 的现代化后台管理解决方案
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## ✨ 项目简介
+
+Ping Smart Club Admin 是一个基于 Vue 3 + Vite 的现代化后台管理系统，专为乒乓球俱乐部管理而设计。采用最新的前端技术栈，提供优秀的开发体验和高性能的用户界面。
+
+## 🛠️ 技术栈
+
+### 核心框架
+- **Vue 3.5.13** - 渐进式 JavaScript 框架
+- **Vite 5.4.11** - 下一代前端构建工具
+
+### 状态管理 & 路由
+- **Pinia 2.2.6** - Vue 3 专用的状态管理库
+- **Vue Router 4.5.0** - Vue 3 官方路由管理器
+
+### UI & HTTP
+- **Element Plus 2.8.7** - Vue 3 企业级 UI 组件库
+- **Axios 1.7.9** - 基于 Promise 的 HTTP 库
+- **@element-plus/icons-vue 2.3.1** - Element Plus 图标库
+
+### 开发工具
+- **ESLint 9.15.0** - JavaScript 代码检查工具
+- **Prettier 3.3.3** - 代码格式化工具
+
+## 📋 环境要求
+
+- **Node.js** >= 18.0.0
+- **npm** >= 8.0.0 或 **yarn** >= 1.22.0
+- **Git** >= 2.0.0
+
+## 🚀 快速开始
+
+### 1. 克隆项目
+
+```bash
+git clone <repository-url>
+cd ping-smart-club-admin-vue3-vite
+```
+
+### 2. 安装依赖
+
+```bash
+# 使用 npm
+npm install
+
+# 或使用 yarn
+yarn install
+
+# 或使用 pnpm
+pnpm install
+```
+
+### 3. 启动开发服务器
+
+```bash
+# 启动开发服务器 (推荐)
+npm run dev
+
+# 或使用其他包管理器
+yarn dev
+pnpm dev
+```
+
+启动后，浏览器会自动打开 `http://localhost:3000`
+
+### 4. 构建生产版本
+
+```bash
+# 构建生产版本
+npm run build
+
+# 或使用其他包管理器
+yarn build
+pnpm build
+```
+
+### 5. 预览生产构建
+
+```bash
+# 预览生产版本
+npm run preview
+
+# 或使用其他包管理器
+yarn preview
+pnpm preview
+```
+
+## 📜 可用脚本命令
+
+| 命令 | 描述 | 说明 |
+|------|------|------|
+| `npm run dev` | 启动开发服务器 | 支持热重载，自动打开浏览器 |
+| `npm run build` | 构建生产版本 | 输出到 `dist/` 目录 |
+| `npm run preview` | 预览生产构建 | 本地预览构建结果 |
+| `npm run lint` | 自动修复代码规范 | 使用 ESLint 修复代码问题 |
+| `npm run lint:check` | 检查代码规范 | 只检查，不自动修复 |
+
+## 📁 项目结构
+
+```
+ping-smart-club-admin-vue3-vite/
+├── public/                 # 静态资源 (不会被 Vite 处理)
+│   ├── favicon.ico        # 网站图标
+│   └── index.html         # HTML 模板
+├── src/                   # 源代码目录
+│   ├── api/              # API 接口管理
+│   │   ├── modules/      # API 模块 (按业务划分)
+│   │   └── index.js      # Axios 实例和拦截器
+│   ├── assets/           # 静态资源 (会被 Vite 处理)
+│   ├── components/       # 公共组件
+│   ├── router/           # 路由配置
+│   ├── stores/           # Pinia 状态管理
+│   ├── utils/            # 工具函数
+│   ├── views/            # 页面组件
+│   ├── App.vue           # 根组件
+│   └── main.js           # 应用入口文件
+├── .eslintrc.js          # ESLint 配置
+├── .prettierrc           # Prettier 配置
+├── .gitignore           # Git 忽略文件
+├── package.json          # 项目配置和依赖
+├── vite.config.js        # Vite 配置
+└── README.md            # 项目说明文档
+```
+
+## 🔧 开发规范
+
+### 组件开发
+- **强制使用 Composition API** (`<script setup>`)
+- **禁止使用 Options API**
+- 遵循 `<script setup>` -> `<template>` -> `<style scoped>` 的顺序
+
+### API 管理
+- **禁止在组件内直接使用 axios**
+- 所有 API 请求必须抽离到 `src/api/modules/` 目录
+- 按业务模块组织 API 接口
+
+### 代码规范
+- 使用 ESLint 检查代码质量
+- 使用 Prettier 统一代码格式
+- 提交前务必运行 `npm run lint`
+
+## 🌐 浏览器支持
+
+- Chrome >= 87
+- Firefox >= 78
+- Safari >= 14
+- Edge >= 88
+
+## 📦 部署说明
+
+### 构建命令
+```bash
+npm run build
+```
+
+构建完成后，`dist/` 目录下的文件即可部署到服务器。
+
+### 部署配置
+- 支持静态文件部署
+- 可部署到 Nginx、Apache 等 Web 服务器
+- 支持 CDN 加速
+
+**Ping Smart Club Admin** - 让乒乓球俱乐部管理更智能！🏓
