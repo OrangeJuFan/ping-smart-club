@@ -1,13 +1,15 @@
 spring:
   application:
     name: ping-smart-club-web-boot
+  profiles:
+    active: dev
   
   # 数据源配置 (HikariCP)
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ping_smart_club?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: root
+    password: QAZwsx123!
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       # 连接池名称

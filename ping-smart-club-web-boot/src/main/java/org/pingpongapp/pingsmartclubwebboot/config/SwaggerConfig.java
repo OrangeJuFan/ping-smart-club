@@ -22,7 +22,7 @@ public class SwaggerConfig {
         return new OpenAPI()
             .info(new Info()
                 .title("Ping Smart Club API 文档")
-                .description("乒智管 - 乒乓球俱乐部管理系统 API 接口文档")
+                .description("乒智管 API 接口文档")
                 .version("v1.0.0")
                 .contact(new Contact()
                     .name("Ping Smart Club Team")

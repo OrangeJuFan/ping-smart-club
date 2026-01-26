@@ -15,3 +15,5 @@ pingsrc/static/audio/tineng/debug.log
 
 
 logs/
+ping-smart-club-web-boot/logs/
+ping-smart-club-web-boot/src/main/resources/
