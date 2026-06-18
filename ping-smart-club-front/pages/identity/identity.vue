@@ -83,7 +83,7 @@ export default {
 
       setTimeout(() => {
         uni.reLaunch({
-          url: '/pages/club/club'
+          url: type === 'parent' ? '/pages/parent/parent' : '/pages/club/club'
         })
       }, 1500)
     }

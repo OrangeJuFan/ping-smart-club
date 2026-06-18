@@ -1,182 +1,343 @@
 <template>
-  <view class="container">
-    <view class="header">个人中心</view>
+  <view class="page">
+    <view class="title-row">
+      <text class="page-title">个人资料</text>
+    </view>
 
-    <view class="profile-section">
-      <view class="avatar-wrapper">
-        <image 
-          :src="userInfo.avatarUrl || '/static/images/default-avatar.png'" 
-          class="avatar"
-          mode="aspectFill"
-        ></image>
+    <view v-if="session.guardian" class="profile-card">
+      <text class="eyebrow">家长账号</text>
+      <text class="profile-name">{{ session.guardian.name }}</text>
+      <text class="profile-meta">{{ session.guardian.relation }} · {{ session.guardian.phone }}</text>
+    </view>
+
+    <view v-if="currentStudent" class="student-card">
+      <view class="avatar" :style="{ backgroundColor: currentStudent.avatarColor }">
+        <text>{{ currentStudent.name.slice(0, 1) }}</text>
       </view>
-      <text class="username">{{userInfo.nickName || '未登录'}}</text>
+      <view class="student-info">
+        <text class="profile-name">{{ currentStudent.name }}</text>
+        <text class="profile-meta">{{ currentStudent.level }} · {{ currentStudent.age }} 岁 · 剩余 {{ currentStudent.balance }} 课时</text>
+        <text class="student-remark">{{ currentStudent.remark }}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">绑定的孩子</text>
+      <view class="child-list">
+        <view
+          v-for="student in session.students"
+          :key="student.id"
+          class="child-item"
+          :class="{ active: student.id === session.selectedStudentId }"
+          @click="switchStudent(student.id)"
+        >
+          <view class="mini-avatar" :style="{ backgroundColor: student.avatarColor }">
+            <text>{{ student.name.slice(0, 1) }}</text>
+          </view>
+          <text>{{ student.name }}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section form-card">
+      <view>
+        <text class="section-title">绑定学员</text>
+        <text class="form-tip">可继续绑定多个孩子，首页会显示切换入口。</text>
+      </view>
+      <view class="field">
+        <text>学员姓名</text>
+        <input v-model="bindForm.name" maxlength="12" placeholder="请输入学员姓名" />
+      </view>
+      <view class="field">
+        <text>学员手机号</text>
+        <input v-model="bindForm.phone" maxlength="11" type="number" placeholder="请输入学员手机号" />
+      </view>
+      <button class="primary-btn" :loading="loading" @click="bindStudent">绑定</button>
     </view>
 
     <view class="menu-list">
-      <view class="menu-item" @click="navigateTo('/pages/parent/children')">
-        <text class="menu-title">我的孩子</text>
-        <text class="menu-arrow">></text>
+      <view class="menu-item" @click="navigate('/pages/parent/appointments')">
+        <text>我的预约</text>
+        <text>›</text>
       </view>
-      <view class="menu-item" @click="navigateTo('/pages/parent/records')">
-        <text class="menu-title">学习记录</text>
-        <text class="menu-arrow">></text>
+      <view class="menu-item" @click="navigate('/pages/parent/records')">
+        <text>课时与成长记录</text>
+        <text>›</text>
       </view>
-      <view class="menu-item" @click="navigateTo('/pages/parent/appointments')">
-        <text class="menu-title">预约记录</text>
-        <text class="menu-arrow">></text>
-      </view>
-      <view class="menu-item" @click="navigateTo('/pages/parent/settings')">
-        <text class="menu-title">设置</text>
-        <text class="menu-arrow">></text>
+      <view class="menu-item" @click="navigate('/pages/parent/messages')">
+        <text>消息通知</text>
+        <text>›</text>
       </view>
     </view>
 
-    <button class="logout-btn" @click="logout">退出登录</button>
+    <view class="button-row">
+      <button class="secondary-btn" @click="resetDemo">恢复演示数据</button>
+      <button class="danger-btn" @click="logout">退出登录</button>
+    </view>
 
-    <!-- 使用自定义tabbar组件 -->
-    <custom-tabbar 
-      :user-role="'parent'" 
-      :current="2" 
-      @change="onTabChange"
-    />
+    <custom-tabbar :user-role="'parent'" :current="2" />
   </view>
 </template>
 
 <script>
-import customTabbar from '@/pages/components/custom-tabbar.vue';
+import parentMock from '@/services/parentMock'
+import CustomTabbar from '@/pages/components/custom-tabbar.vue'
 
 export default {
   components: {
-    customTabbar
+    CustomTabbar
   },
   data() {
     return {
-      userInfo: {}
-    };
+      loading: false,
+      session: {
+        guardian: null,
+        students: [],
+        selectedStudentId: ''
+      },
+      bindForm: {
+        name: '',
+        phone: ''
+      }
+    }
   },
-  onLoad() {
-    this.getUserInfo();
+  computed: {
+    currentStudent() {
+      return this.session.students.find(item => item.id === this.session.selectedStudentId) || null
+    }
+  },
+  onShow() {
+    this.loadSession()
   },
   methods: {
-    getUserInfo() {
+    async loadSession() {
       try {
-        const userInfo = uni.getStorageSync('userInfo');
-        if (userInfo) {
-          this.userInfo = userInfo;
-        }
-      } catch (e) {
-        console.error('获取用户信息失败:', e);
+        this.session = await parentMock.getSession()
+        if (!this.session.guardian) uni.reLaunch({ url: '/pages/login/login' })
+      } catch (error) {
+        this.toast(error.message || '加载失败')
       }
     },
-    navigateTo(url) {
-      uni.showToast({
-        title: '功能开发中',
-        icon: 'none'
-      });
+    async switchStudent(studentId) {
+      try {
+        this.session = await parentMock.switchStudent(studentId)
+      } catch (error) {
+        this.toast(error.message || '切换失败')
+      }
+    },
+    async bindStudent() {
+      this.loading = true
+      try {
+        this.session = await parentMock.bindStudent(this.bindForm)
+        this.bindForm = { name: '', phone: '' }
+        this.toast('绑定成功', 'success')
+      } catch (error) {
+        this.toast(error.message || '绑定失败')
+      } finally {
+        this.loading = false
+      }
+    },
+    resetDemo() {
+      uni.showModal({
+        title: '恢复演示数据',
+        content: '会重置家长端本地演示数据，确认继续吗？',
+        success: async res => {
+          if (!res.confirm) return
+          await parentMock.resetDemoData()
+          this.toast('已恢复', 'success')
+          uni.reLaunch({ url: '/pages/login/login' })
+        }
+      })
     },
     logout() {
       uni.showModal({
-        title: '提示',
-        content: '确定要退出登录吗？',
-        success: (res) => {
-          if (res.confirm) {
-            try {
-              uni.removeStorageSync('token');
-              uni.removeStorageSync('userInfo');
-              uni.removeStorageSync('userRole');
-
-              uni.reLaunch({
-                url: '/pages/login/login'
-              });
-            } catch (e) {
-              console.error('退出登录失败:', e);
-            }
-          }
+        title: '退出登录',
+        content: '确认退出当前账号吗？',
+        success: async res => {
+          if (!res.confirm) return
+          await parentMock.logout()
+          uni.removeStorageSync('token')
+          uni.removeStorageSync('userInfo')
+          uni.removeStorageSync('userRole')
+          uni.reLaunch({ url: '/pages/login/login' })
         }
-      });
+      })
     },
-    onTabChange(index) {
-      console.log('当前选中的tab索引:', index);
+    navigate(url) {
+      uni.navigateTo({ url })
+    },
+    toast(title, icon) {
+      uni.showToast({ title, icon: icon || 'none' })
     }
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>
-.container {
-  padding: 20px;
-  padding-bottom: 120rpx; /* 留出底部tabbar的空间 */
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 140rpx;
+  background: #f7f8f4;
 }
 
-.header {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 30px;
-  text-align: center;
+.title-row {
+  margin-bottom: 22rpx;
 }
 
-.profile-section {
+.page-title {
+  color: #17201d;
+  font-size: 44rpx;
+  font-weight: 900;
+}
+
+.profile-card,
+.student-card,
+.section,
+.menu-list {
+  margin-bottom: 22rpx;
+  padding: 28rpx;
+  background: #ffffff;
+  border: 1rpx solid #dce4de;
+  border-radius: 16rpx;
+}
+
+.profile-card,
+.form-card,
+.student-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-bottom: 40px;
+  gap: 10rpx;
 }
 
-.avatar-wrapper {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
-  overflow: hidden;
-  margin-bottom: 15px;
-  border: 2px solid #eee;
+.eyebrow,
+.profile-meta,
+.student-remark,
+.form-tip,
+.field text {
+  color: #66736d;
+  font-size: 26rpx;
+}
+
+.profile-name,
+.section-title {
+  color: #17201d;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.student-card,
+.child-item,
+.menu-item,
+.button-row {
+  display: flex;
+  align-items: center;
+}
+
+.student-card {
+  gap: 20rpx;
+}
+
+.avatar,
+.mini-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  border-radius: 50%;
+  font-weight: 900;
 }
 
 .avatar {
-  width: 100%;
-  height: 100%;
+  width: 88rpx;
+  height: 88rpx;
 }
 
-.username {
-  font-size: 18px;
-  font-weight: bold;
+.mini-avatar {
+  width: 54rpx;
+  height: 54rpx;
+}
+
+.student-info {
+  flex: 1;
+}
+
+.child-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 16rpx;
+}
+
+.child-item {
+  gap: 16rpx;
+  min-height: 78rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid #dce4de;
+  border-radius: 14rpx;
+}
+
+.child-item.active {
+  border-color: #0f766e;
+  background: #edf4f1;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.field input {
+  height: 82rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #dce4de;
+  border-radius: 14rpx;
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  height: 82rpx;
+  margin: 0;
+  border-radius: 14rpx;
+  font-size: 28rpx;
+  line-height: 82rpx;
+}
+
+.primary-btn {
+  color: #ffffff;
+  background: #0f766e;
 }
 
 .menu-list {
-  background-color: #ffffff;
-  border-radius: 8px;
+  padding: 0;
   overflow: hidden;
-  margin-bottom: 30px;
 }
 
 .menu-item {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  border-bottom: 1px solid #f0f0f0;
-
-  &:last-child {
-    border-bottom: none;
-  }
+  min-height: 92rpx;
+  padding: 0 26rpx;
+  color: #17201d;
+  border-bottom: 1rpx solid #edf1ee;
+  font-size: 28rpx;
 }
 
-.menu-title {
-  font-size: 16px;
+.button-row {
+  gap: 18rpx;
 }
 
-.menu-arrow {
-  color: #999;
-  font-size: 18px;
+.button-row button {
+  flex: 1;
 }
 
-.logout-btn {
-  background-color: #ff4d4f;
-  color: white;
-  border: none;
-  padding: 12px 0;
-  border-radius: 8px;
-  font-size: 16px;
-  width: 100%;
+.secondary-btn {
+  color: #0f766e;
+  background: #edf4f1;
+}
+
+.danger-btn {
+  color: #c2413b;
+  background: #fff2f0;
 }
 </style>

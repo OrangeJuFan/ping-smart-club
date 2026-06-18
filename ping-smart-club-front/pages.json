@@ -57,6 +57,30 @@
 			}
 		},
 		{
+			"path": "pages/parent/course-detail",
+			"style": {
+				"navigationBarTitleText": "课程详情"
+			}
+		},
+		{
+			"path": "pages/parent/appointments",
+			"style": {
+				"navigationBarTitleText": "我的预约"
+			}
+		},
+		{
+			"path": "pages/parent/records",
+			"style": {
+				"navigationBarTitleText": "课时与成长"
+			}
+		},
+		{
+			"path": "pages/parent/messages",
+			"style": {
+				"navigationBarTitleText": "消息通知"
+			}
+		},
+		{
 			"path": "pages/coach/course",
 			"style": {
 				"navigationBarTitleText": "课程管理"
@@ -104,7 +128,7 @@
 		"backgroundColor": "#ffffff",
 		"list": [
 			{
-				"pagePath": "pages/club/club",
+				"pagePath": "pages/parent/parent",
 				"text": "首页"
 			},
 			{

@@ -49,7 +49,7 @@ export default {
 			// 家长tabbar配置
 			parentTabList: [
 				{
-					pagePath: "/pages/club/club",
+					pagePath: "/pages/parent/parent",
 					text: "首页",
 					iconPath: "/static/images/home.png",
 					selectedIconPath: "/static/images/home-active.png"

@@ -1,128 +1,238 @@
 <template>
-  <view class="container">
-    <view class="header">约课页面</view>
+  <view class="page">
+    <view class="title-row">
+      <text class="page-title">课程预约</text>
+    </view>
 
-    <view class="content">
-      <text>这里可以查看可预约的课程</text>
-      <text>选择合适的教练和时间进行预约</text>
-
-      <view class="course-list">
-        <view class="course-item" v-for="(item, index) in courseList" :key="index">
-          <view class="course-info">
-            <text class="course-name">{{item.name}}</text>
-            <text class="course-coach">教练: {{item.coach}}</text>
-            <text class="course-time">时间: {{item.time}}</text>
+    <view class="filter-card">
+      <scroll-view scroll-x class="type-scroll">
+        <view class="type-row">
+          <view
+            v-for="item in typeOptions"
+            :key="item.value"
+            class="type-chip"
+            :class="{ active: filters.courseTypeCode === item.value }"
+            @click="setType(item.value)"
+          >
+            <text>{{ item.label }}</text>
           </view>
-          <button class="book-btn" @click="bookCourse(index)">预约</button>
         </view>
+      </scroll-view>
+
+      <scroll-view scroll-x class="date-scroll">
+        <view class="date-row">
+          <view
+            v-for="item in dateOptions"
+            :key="item.value"
+            class="date-chip"
+            :class="{ active: filters.date === item.value }"
+            @click="setDate(item.value)"
+          >
+            <text>{{ item.label }}</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <picker :range="coachNames" :value="coachIndex" @change="setCoach">
+        <view class="picker-line">
+          <text>教练</text>
+          <text>{{ coachNames[coachIndex] }}</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="list">
+      <course-card
+        v-for="item in schedules"
+        :key="item.schedule.id"
+        :item="item"
+        @detail="goDetail"
+        @book="bookCourse"
+        @waitlist="bookCourse"
+      />
+      <view v-if="!loading && !schedules.length" class="empty-box">
+        <text>暂无可预约课程</text>
       </view>
     </view>
 
-    <!-- 使用自定义tabbar组件 -->
-    <custom-tabbar 
-      :user-role="'parent'" 
-      :current="1" 
-      @change="onTabChange"
-    />
+    <custom-tabbar :user-role="'parent'" :current="1" />
   </view>
 </template>
 
 <script>
-import customTabbar from '@/pages/components/custom-tabbar.vue';
+import parentMock from '@/services/parentMock'
+import CustomTabbar from '@/pages/components/custom-tabbar.vue'
+import CourseCard from '@/components/parent/course-card.vue'
 
 export default {
   components: {
-    customTabbar
+    CustomTabbar,
+    CourseCard
   },
   data() {
+    const dateOptions = parentMock.getDateOptions(7)
     return {
-      courseList: [
-        {
-          name: "乒乓球基础班",
-          coach: "张教练",
-          time: "周三 16:00-17:00"
-        },
-        {
-          name: "乒乓球进阶班",
-          coach: "李教练",
-          time: "周五 18:00-19:00"
-        },
-        {
-          name: "一对一私教",
-          coach: "王教练",
-          time: "预约制"
-        }
-      ]
-    };
+      loading: false,
+      dateOptions,
+      meta: {
+        courseTypes: [],
+        coaches: []
+      },
+      filters: {
+        date: dateOptions[0] ? dateOptions[0].value : '',
+        courseTypeCode: 'all',
+        coachId: ''
+      },
+      schedules: []
+    }
+  },
+  computed: {
+    typeOptions() {
+      return [{ label: '全部', value: 'all' }].concat(this.meta.courseTypes.map(item => ({
+        label: item.name,
+        value: item.code
+      })))
+    },
+    coachNames() {
+      return ['全部教练'].concat(this.meta.coaches.map(item => `${item.name} · ${item.title}`))
+    },
+    coachIndex() {
+      const index = this.meta.coaches.findIndex(item => item.id === this.filters.coachId)
+      return index >= 0 ? index + 1 : 0
+    }
+  },
+  onShow() {
+    this.loadPage()
   },
   methods: {
-    bookCourse(index) {
-      uni.showToast({
-        title: '预约成功',
-        icon: 'success'
-      });
+    async loadPage() {
+      this.loading = true
+      try {
+        const session = await parentMock.getSession()
+        if (!session.guardian) {
+          uni.reLaunch({ url: '/pages/login/login' })
+          return
+        }
+        this.meta = await parentMock.getScheduleMeta()
+        await this.loadSchedules()
+      } catch (error) {
+        this.toast(error.message || '加载失败')
+      } finally {
+        this.loading = false
+      }
     },
-    onTabChange(index) {
-      console.log('当前选中的tab索引:', index);
+    async loadSchedules() {
+      this.schedules = await parentMock.listSchedules(this.filters)
+    },
+    setType(value) {
+      this.filters.courseTypeCode = value
+      this.loadSchedules()
+    },
+    setDate(value) {
+      this.filters.date = value
+      this.loadSchedules()
+    },
+    setCoach(event) {
+      const index = Number(event.detail.value)
+      this.filters.coachId = index > 0 ? this.meta.coaches[index - 1].id : ''
+      this.loadSchedules()
+    },
+    goDetail(scheduleId) {
+      uni.navigateTo({ url: `/pages/parent/course-detail?id=${scheduleId}` })
+    },
+    async bookCourse(scheduleId) {
+      try {
+        const result = await parentMock.createBooking(scheduleId)
+        this.toast(result.booking.status === 'waitlisted' ? '已加入候补' : '预约成功', 'success')
+        await this.loadSchedules()
+      } catch (error) {
+        this.toast(error.message || '预约失败')
+      }
+    },
+    toast(title, icon) {
+      uni.showToast({ title, icon: icon || 'none' })
     }
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>
-.container {
-  padding: 20px;
-  padding-bottom: 120rpx; /* 留出底部tabbar的空间 */
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 140rpx;
+  background: #f7f8f4;
 }
 
-.header {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 30px;
-  text-align: center;
+.title-row {
+  margin-bottom: 22rpx;
 }
 
-.content {
-  width: 100%;
+.page-title {
+  color: #17201d;
+  font-size: 44rpx;
+  font-weight: 900;
 }
 
-.course-list {
-  margin-top: 20px;
-}
-
-.course-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background-color: #f8f8f8;
-  border-radius: 8px;
-  margin-bottom: 15px;
-}
-
-.course-info {
+.filter-card {
   display: flex;
   flex-direction: column;
+  gap: 18rpx;
+  padding: 22rpx;
+  background: #ffffff;
+  border: 1rpx solid #dce4de;
+  border-radius: 16rpx;
 }
 
-.course-name {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 5px;
+.type-row,
+.date-row {
+  display: flex;
+  gap: 14rpx;
+  min-width: max-content;
 }
 
-.course-coach, .course-time {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 3px;
+.type-chip,
+.date-chip {
+  padding: 16rpx 24rpx;
+  color: #66736d;
+  background: #f3f6f2;
+  border: 1rpx solid #dce4de;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  white-space: nowrap;
 }
 
-.book-btn {
-  background-color: #007AFF;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  font-size: 14px;
+.type-chip.active,
+.date-chip.active {
+  color: #ffffff;
+  background: #0f766e;
+  border-color: #0f766e;
+}
+
+.picker-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72rpx;
+  padding: 0 18rpx;
+  color: #17201d;
+  background: #f6f8f3;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.empty-box {
+  padding: 42rpx;
+  color: #66736d;
+  text-align: center;
+  background: #ffffff;
+  border: 1rpx solid #dce4de;
+  border-radius: 16rpx;
 }
 </style>

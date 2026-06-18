@@ -1,0 +1,138 @@
+:root {
+  --color-bg: #f5f7f9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafb;
+  --color-border: #dfe5ea;
+  --color-border-strong: #c8d1d8;
+  --color-text: #17212b;
+  --color-text-muted: #65717c;
+  --color-primary: #0f766e;
+  --color-primary-dark: #115e59;
+  --color-primary-soft: #dff5f1;
+  --color-info: #2563eb;
+  --color-warning: #b45309;
+  --color-warning-soft: #fff4dd;
+  --color-danger: #c2410c;
+  --color-danger-soft: #fff1e8;
+  --color-success: #15803d;
+  --color-success-soft: #e7f7ec;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 12px 24px rgba(15, 23, 42, 0.08);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.page-description {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--color-text);
+  padding: 7px 10px;
+  outline: none;
+}
+
+.textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.tab-button {
+  min-height: 32px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  padding: 0 12px;
+}
+
+.tab-button.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+@media (max-width: 920px) {
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+}
