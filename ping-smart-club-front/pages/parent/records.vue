@@ -16,48 +16,44 @@
       <text class="balance-status">{{ summary.student.level }}</text>
     </view>
 
-    <view class="section">
-      <text class="section-title">课时明细</text>
-      <view v-if="creditRecords.length" class="list">
-        <view v-for="item in creditRecords" :key="item.id" class="row-card">
-          <view>
-            <text class="row-title">{{ item.title }}</text>
-            <text class="row-meta">{{ formatDateLabel(item.createdAt) }} {{ formatClock(item.createdAt) }} · 余额 {{ item.balanceAfter }}</text>
-          </view>
-          <text class="amount" :class="{ plus: item.amount > 0 }">{{ signedAmount(item.amount) }}</text>
-        </view>
-      </view>
+    <uni-card title="课时明细" :is-shadow="true">
+      <uni-list v-if="creditRecords.length">
+        <uni-list-item
+          v-for="item in creditRecords"
+          :key="item.id"
+          :title="item.title"
+          :note="formatDateLabel(item.createdAt) + ' ' + formatClock(item.createdAt) + ' · 余额 ' + item.balanceAfter"
+          :right-text="signedAmount(item.amount)"
+        />
+      </uni-list>
       <view v-else class="empty-box"><text>暂无课时明细</text></view>
-    </view>
+    </uni-card>
 
-    <view class="section">
-      <text class="section-title">已完成课程</text>
-      <view v-if="completedBookings.length" class="list">
-        <view v-for="item in completedBookings" :key="item.booking.id" class="row-card">
-          <view>
-            <text class="row-title">{{ item.courseType.name }}</text>
-            <text class="row-meta">{{ formatTimeRange(item.schedule.startTime, item.schedule.endTime) }} · {{ item.coach.name }}</text>
-          </view>
-          <text class="amount">{{ item.courseType.creditCost }} 课时</text>
-        </view>
-      </view>
+    <uni-card title="已完成课程" :is-shadow="true">
+      <uni-list v-if="completedBookings.length">
+        <uni-list-item
+          v-for="item in completedBookings"
+          :key="item.booking.id"
+          :title="item.courseType.name"
+          :note="formatTimeRange(item.schedule.startTime, item.schedule.endTime) + ' · ' + item.coach.name"
+          :right-text="item.courseType.creditCost + ' 课时'"
+        />
+      </uni-list>
       <view v-else class="empty-box"><text>暂无已完成课程</text></view>
-    </view>
+    </uni-card>
 
-    <view class="section">
-      <text class="section-title">成长记录</text>
-      <view v-if="growthRecords.length" class="list">
-        <view v-for="item in growthRecords" :key="item.id" class="growth-card">
-          <view class="growth-head">
-            <text class="row-title">{{ item.title }}</text>
-            <text class="level">{{ item.level }}</text>
-          </view>
-          <text class="growth-text">{{ item.remark }}</text>
-          <text class="row-meta">{{ formatDateLabel(item.createdAt) }} {{ formatClock(item.createdAt) }}</text>
-        </view>
-      </view>
+    <uni-card title="成长记录" :is-shadow="true">
+      <uni-list v-if="growthRecords.length">
+        <uni-list-item
+          v-for="item in growthRecords"
+          :key="item.id"
+          :title="item.title"
+          :note="item.remark + ' · ' + formatDateLabel(item.createdAt) + ' ' + formatClock(item.createdAt)"
+          :right-text="item.level"
+        />
+      </uni-list>
       <view v-else class="empty-box"><text>暂无成长记录</text></view>
-    </view>
+    </uni-card>
   </view>
 </template>
 
@@ -139,8 +135,7 @@ export default {
   line-height: 62rpx;
 }
 
-.page-title,
-.section-title {
+.page-title {
   color: #17201d;
   font-weight: 900;
 }
@@ -172,43 +167,17 @@ export default {
   margin-left: 8rpx;
 }
 
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  margin-top: 28rpx;
-}
-
-.section-title {
-  font-size: 34rpx;
-}
-
 .list {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 
-.row-card,
-.growth-card,
 .empty-box {
   padding: 26rpx;
   background: #ffffff;
   border: 1rpx solid #dce4de;
   border-radius: 16rpx;
-}
-
-.row-card,
-.growth-head {
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.row-title {
-  display: block;
-  color: #17201d;
-  font-size: 30rpx;
-  font-weight: 800;
 }
 
 .row-meta,
@@ -217,23 +186,6 @@ export default {
   margin-top: 8rpx;
   color: #66736d;
   font-size: 24rpx;
-}
-
-.amount {
-  color: #e36f4b;
-  font-size: 28rpx;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.amount.plus {
-  color: #0f766e;
-}
-
-.level {
-  color: #2563eb;
-  font-size: 24rpx;
-  font-weight: 800;
 }
 
 .empty-box {

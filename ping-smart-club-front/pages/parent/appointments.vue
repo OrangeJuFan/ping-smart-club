@@ -5,19 +5,13 @@
       <text class="page-title">我的预约</text>
     </view>
 
-    <scroll-view scroll-x class="tab-scroll">
-      <view class="tab-row">
-        <view
-          v-for="item in tabs"
-          :key="item.value"
-          class="tab-chip"
-          :class="{ active: activeStatus === item.value }"
-          @click="setStatus(item.value)"
-        >
-          <text>{{ item.label }}</text>
-        </view>
-      </view>
-    </scroll-view>
+    <uni-segmented-control
+      :current="activeIndex"
+      :values="tabLabels"
+      style-type="button"
+      active-color="#0f766e"
+      @clickItem="setStatus"
+    />
 
     <view class="list">
       <booking-card
@@ -56,6 +50,15 @@ export default {
       bookings: []
     }
   },
+  computed: {
+    activeIndex() {
+      const index = this.tabs.findIndex(item => item.value === this.activeStatus)
+      return index >= 0 ? index : 0
+    },
+    tabLabels() {
+      return this.tabs.map(item => item.label)
+    }
+  },
   onShow() {
     this.loadBookings()
   },
@@ -70,8 +73,10 @@ export default {
         this.loading = false
       }
     },
-    setStatus(status) {
-      this.activeStatus = status
+    setStatus(event) {
+      const item = this.tabs[event.currentIndex]
+      if (!item) return
+      this.activeStatus = item.value
       this.loadBookings()
     },
     cancelBooking(bookingId) {
@@ -138,28 +143,6 @@ export default {
   color: #17201d;
   font-size: 40rpx;
   font-weight: 900;
-}
-
-.tab-row {
-  display: flex;
-  gap: 14rpx;
-  min-width: max-content;
-}
-
-.tab-chip {
-  padding: 16rpx 24rpx;
-  color: #66736d;
-  background: #ffffff;
-  border: 1rpx solid #dce4de;
-  border-radius: 12rpx;
-  font-size: 26rpx;
-  white-space: nowrap;
-}
-
-.tab-chip.active {
-  color: #ffffff;
-  background: #0f766e;
-  border-color: #0f766e;
 }
 
 .list {

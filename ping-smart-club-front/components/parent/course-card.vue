@@ -1,34 +1,38 @@
 <template>
-  <view class="course-card" @click="$emit('detail', item.schedule.id)">
+  <uni-card :title="item.courseType.name" :extra="item.courseType.shortName" :is-shadow="true" @click="$emit('detail', item.schedule.id)">
     <view class="card-head">
-      <view class="title-box">
-        <view class="title-line">
-          <text class="course-name">{{ item.courseType.name }}</text>
-          <status-pill :status="item.isFull ? 'full' : 'open'" />
-        </view>
-        <text class="course-desc">{{ item.courseType.duration }} 分钟 · {{ item.courseType.creditCost }} 课时</text>
-      </view>
-      <text class="credit">{{ item.courseType.shortName }}</text>
+      <text class="course-desc">{{ item.courseType.duration }} 分钟 · {{ item.courseType.creditCost }} 课时</text>
+      <status-pill :status="item.isFull ? 'full' : 'open'" />
     </view>
 
     <view class="meta-list">
-      <text>{{ formatTimeRange(item.schedule.startTime, item.schedule.endTime) }}</text>
-      <text>{{ item.coach.name }} · {{ item.coach.title }}</text>
-      <text>{{ item.venue.name }} · {{ item.venue.address }}</text>
-      <text>{{ item.isFull ? '候补 ' + item.schedule.waitlistCount + ' 人' : '剩余 ' + item.remainingSeats + ' 名' }}</text>
+      <view class="meta-line">
+        <uni-icons type="calendar" size="16" color="#66736d" />
+        <text>{{ formatTimeRange(item.schedule.startTime, item.schedule.endTime) }}</text>
+      </view>
+      <view class="meta-line">
+        <uni-icons type="person" size="16" color="#66736d" />
+        <text>{{ item.coach.name }} · {{ item.coach.title }}</text>
+      </view>
+      <view class="meta-line">
+        <uni-icons type="location" size="16" color="#66736d" />
+        <text>{{ item.venue.name }} · {{ item.venue.address }}</text>
+      </view>
+      <view class="meta-line">
+        <uni-icons type="staff" size="16" color="#66736d" />
+        <text>{{ item.isFull ? '候补 ' + item.schedule.waitlistCount + ' 人' : '剩余 ' + item.remainingSeats + ' 名' }}</text>
+      </view>
     </view>
 
-    <view v-if="item.schedule.note" class="note">
-      <text>{{ item.schedule.note }}</text>
-    </view>
+    <uni-notice-bar v-if="item.schedule.note" :text="item.schedule.note" single show-icon />
 
     <view class="actions" @click.stop>
-      <button class="ghost-btn" @click="$emit('detail', item.schedule.id)">详情</button>
+      <button class="plain-btn" @click="$emit('detail', item.schedule.id)">详情</button>
       <button class="primary-btn" :disabled="item.hasActiveBooking" @click="handleAction">
         {{ actionText }}
       </button>
     </view>
-  </view>
+  </uni-card>
 </template>
 
 <script>
@@ -65,75 +69,41 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.course-card {
-  padding: 28rpx;
-  background: #ffffff;
-  border: 1rpx solid #dce4de;
-  border-radius: 16rpx;
-  box-shadow: 0 10rpx 24rpx rgba(27, 45, 38, 0.08);
-}
-
-.card-head,
-.title-line,
-.actions {
+.card-head {
   display: flex;
   align-items: center;
-}
-
-.card-head {
   justify-content: space-between;
   gap: 20rpx;
-}
-
-.title-box {
-  flex: 1;
-  min-width: 0;
-}
-
-.title-line {
-  gap: 14rpx;
-}
-
-.course-name {
-  color: #17201d;
-  font-size: 34rpx;
-  font-weight: 800;
+  margin-bottom: 18rpx;
 }
 
 .course-desc,
-.meta-list text,
-.note {
+.meta-line text {
   color: #66736d;
   font-size: 26rpx;
-}
-
-.credit {
-  color: #e36f4b;
-  font-size: 30rpx;
-  font-weight: 800;
 }
 
 .meta-list {
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
-  margin-top: 22rpx;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
 }
 
-.note {
-  margin-top: 20rpx;
-  padding: 18rpx;
-  background: #f4f7ef;
-  border-radius: 12rpx;
+.meta-line {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
 }
 
 .actions {
+  display: flex;
   justify-content: flex-end;
   gap: 16rpx;
-  margin-top: 24rpx;
+  margin-top: 18rpx;
 }
 
-.ghost-btn,
+.plain-btn,
 .primary-btn {
   height: 68rpx;
   margin: 0;
@@ -143,7 +113,7 @@ export default {
   line-height: 68rpx;
 }
 
-.ghost-btn {
+.plain-btn {
   color: #17201d;
   background: #f5f7f3;
 }

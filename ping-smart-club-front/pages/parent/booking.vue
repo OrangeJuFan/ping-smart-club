@@ -5,19 +5,13 @@
     </view>
 
     <view class="filter-card">
-      <scroll-view scroll-x class="type-scroll">
-        <view class="type-row">
-          <view
-            v-for="item in typeOptions"
-            :key="item.value"
-            class="type-chip"
-            :class="{ active: filters.courseTypeCode === item.value }"
-            @click="setType(item.value)"
-          >
-            <text>{{ item.label }}</text>
-          </view>
-        </view>
-      </scroll-view>
+      <uni-segmented-control
+        :current="typeIndex"
+        :values="typeLabels"
+        style-type="button"
+        active-color="#0f766e"
+        @clickItem="setType"
+      />
 
       <scroll-view scroll-x class="date-scroll">
         <view class="date-row">
@@ -99,6 +93,13 @@ export default {
     coachIndex() {
       const index = this.meta.coaches.findIndex(item => item.id === this.filters.coachId)
       return index >= 0 ? index + 1 : 0
+    },
+    typeIndex() {
+      const index = this.typeOptions.findIndex(item => item.value === this.filters.courseTypeCode)
+      return index >= 0 ? index : 0
+    },
+    typeLabels() {
+      return this.typeOptions.map(item => item.label)
     }
   },
   onShow() {
@@ -124,8 +125,10 @@ export default {
     async loadSchedules() {
       this.schedules = await parentMock.listSchedules(this.filters)
     },
-    setType(value) {
-      this.filters.courseTypeCode = value
+    setType(event) {
+      const item = this.typeOptions[event.currentIndex]
+      if (!item) return
+      this.filters.courseTypeCode = item.value
       this.loadSchedules()
     },
     setDate(value) {
@@ -183,14 +186,12 @@ export default {
   border-radius: 16rpx;
 }
 
-.type-row,
 .date-row {
   display: flex;
   gap: 14rpx;
   min-width: max-content;
 }
 
-.type-chip,
 .date-chip {
   padding: 16rpx 24rpx;
   color: #66736d;
@@ -201,7 +202,6 @@ export default {
   white-space: nowrap;
 }
 
-.type-chip.active,
 .date-chip.active {
   color: #ffffff;
   background: #0f766e;

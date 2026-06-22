@@ -14,24 +14,12 @@
       <text class="hero-note">{{ detail.schedule.note }}</text>
     </view>
 
-    <view v-if="detail" class="info-card">
-      <view class="info-row">
-        <text>时间</text>
-        <text>{{ formatTimeRange(detail.schedule.startTime, detail.schedule.endTime) }}</text>
-      </view>
-      <view class="info-row">
-        <text>教练</text>
-        <text>{{ detail.coach.name }} · {{ detail.coach.title }}</text>
-      </view>
-      <view class="info-row">
-        <text>场地</text>
-        <text>{{ detail.venue.name }} · {{ detail.venue.address }}</text>
-      </view>
-      <view class="info-row">
-        <text>名额</text>
-        <text>{{ detail.isFull ? '满员，候补 ' + detail.schedule.waitlistCount + ' 人' : '剩余 ' + detail.remainingSeats + ' 名' }}</text>
-      </view>
-    </view>
+    <uni-list v-if="detail" class="info-list">
+      <uni-list-item title="时间" :right-text="formatTimeRange(detail.schedule.startTime, detail.schedule.endTime)" />
+      <uni-list-item title="教练" :right-text="detail.coach.name + ' · ' + detail.coach.title" />
+      <uni-list-item title="场地" :note="detail.venue.address" :right-text="detail.venue.name" />
+      <uni-list-item title="名额" :right-text="detail.isFull ? '满员，候补 ' + detail.schedule.waitlistCount + ' 人' : '剩余 ' + detail.remainingSeats + ' 名'" />
+    </uni-list>
 
     <view v-if="needMoreCredits" class="warning-card">
       <text>当前课时余额不足，本课程需 {{ detail.courseType.creditCost }} 课时。</text>
@@ -116,8 +104,7 @@ export default {
 }
 
 .nav-row,
-.hero-head,
-.info-row {
+.hero-head {
   display: flex;
   align-items: center;
 }
@@ -169,26 +156,8 @@ export default {
   font-size: 28rpx;
 }
 
-.info-card {
+.info-list {
   margin-top: 22rpx;
-  overflow: hidden;
-  background: #ffffff;
-  border: 1rpx solid #dce4de;
-  border-radius: 16rpx;
-}
-
-.info-row {
-  justify-content: space-between;
-  gap: 20rpx;
-  min-height: 92rpx;
-  padding: 0 24rpx;
-  border-bottom: 1rpx solid #edf1ee;
-  color: #17201d;
-  font-size: 28rpx;
-}
-
-.info-row text:first-child {
-  color: #66736d;
 }
 
 .warning-card {

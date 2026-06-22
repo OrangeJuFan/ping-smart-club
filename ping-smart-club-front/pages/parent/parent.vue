@@ -25,24 +25,14 @@
       <text class="balance-status">{{ summary.creditWarning ? '余额偏低' : summary.student.level }}</text>
     </view>
 
-    <view class="quick-grid">
-      <view class="quick-item" @click="navigate('/pages/parent/booking')">
-        <text class="quick-icon">+</text>
-        <text>预约课程</text>
-      </view>
-      <view class="quick-item" @click="navigate('/pages/parent/appointments')">
-        <text class="quick-icon">#</text>
-        <text>我的预约</text>
-      </view>
-      <view class="quick-item" @click="navigate('/pages/parent/records')">
-        <text class="quick-icon">¥</text>
-        <text>课时记录</text>
-      </view>
-      <view class="quick-item" @click="navigate('/pages/parent/my')">
-        <text class="quick-icon">i</text>
-        <text>个人资料</text>
-      </view>
-    </view>
+    <uni-grid :column="4" :show-border="false" :square="false">
+      <uni-grid-item v-for="item in quickActions" :key="item.url">
+        <view class="quick-item" @click="navigate(item.url)">
+          <uni-icons :type="item.icon" size="24" color="#0f766e" />
+          <text>{{ item.label }}</text>
+        </view>
+      </uni-grid-item>
+    </uni-grid>
 
     <view class="section">
       <view class="section-head">
@@ -101,7 +91,13 @@ export default {
         students: [],
         selectedStudentId: ''
       },
-      summary: null
+      summary: null,
+      quickActions: [
+        { label: '预约课程', url: '/pages/parent/booking', icon: 'plus' },
+        { label: '我的预约', url: '/pages/parent/appointments', icon: 'list' },
+        { label: '课时记录', url: '/pages/parent/records', icon: 'calendar' },
+        { label: '个人资料', url: '/pages/parent/my', icon: 'person' }
+      ]
     }
   },
   onShow() {
@@ -176,8 +172,7 @@ export default {
 
 .topbar,
 .balance-card,
-.section-head,
-.quick-grid {
+.section-head {
   display: flex;
 }
 
@@ -236,30 +231,18 @@ export default {
   font-size: 28rpx;
 }
 
-.quick-grid {
-  justify-content: space-between;
-  gap: 14rpx;
-  margin: 18rpx 0;
-}
-
 .quick-item {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10rpx;
+  margin: 18rpx 6rpx 0;
   padding: 20rpx 8rpx;
   background: #ffffff;
   border: 1rpx solid #dce4de;
   border-radius: 16rpx;
   font-size: 24rpx;
   font-weight: 700;
-}
-
-.quick-icon {
-  color: #0f766e;
-  font-size: 34rpx;
-  font-weight: 900;
 }
 
 .section {

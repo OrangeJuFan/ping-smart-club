@@ -6,11 +6,14 @@
       <text class="subtitle">预约课程、查看课时、签到和接收课程提醒。</text>
     </view>
 
-    <view v-if="!session.guardian" class="panel">
-      <view class="mode-row">
-        <button class="mode-btn" :class="{ active: loginMode === 'phone' }" @click="loginMode = 'phone'">手机号</button>
-        <button class="mode-btn" :class="{ active: loginMode === 'wechat' }" @click="loginMode = 'wechat'">微信授权</button>
-      </view>
+    <uni-card v-if="!session.guardian" :is-shadow="true">
+      <uni-segmented-control
+        :current="loginModeIndex"
+        :values="['手机号', '微信授权']"
+        style-type="button"
+        active-color="#0f766e"
+        @clickItem="changeLoginMode"
+      />
 
       <view v-if="loginMode === 'phone'" class="form">
         <view class="field">
@@ -25,9 +28,9 @@
           微信授权登录
         </button>
       </view>
-    </view>
+    </uni-card>
 
-    <view v-else class="panel">
+    <uni-card v-else :is-shadow="true">
       <view class="section-head">
         <text class="section-title">绑定学员信息</text>
         <text class="section-subtitle">可绑定多个孩子，后续可在首页切换。</text>
@@ -46,18 +49,17 @@
 
       <view v-if="session.students.length" class="child-list">
         <text class="child-title">已绑定学员</text>
-        <view v-for="student in session.students" :key="student.id" class="child-item">
-          <view class="avatar" :style="{ backgroundColor: student.avatarColor }">
-            <text>{{ student.name.slice(0, 1) }}</text>
-          </view>
-          <view>
-            <text class="child-name">{{ student.name }}</text>
-            <text class="child-meta">{{ student.level }} · 剩余 {{ student.balance }} 课时</text>
-          </view>
-        </view>
+        <uni-list>
+          <uni-list-item
+            v-for="student in session.students"
+            :key="student.id"
+            :title="student.name"
+            :note="student.level + ' · 剩余 ' + student.balance + ' 课时'"
+          />
+        </uni-list>
         <button class="secondary-btn" @click="goHome">进入首页</button>
       </view>
-    </view>
+    </uni-card>
   </view>
 </template>
 
@@ -68,7 +70,7 @@ export default {
   data() {
     return {
       loading: false,
-      loginMode: 'phone',
+      loginModeIndex: 0,
       phone: '13900010001',
       session: {
         guardian: null,
@@ -81,6 +83,11 @@ export default {
       }
     }
   },
+  computed: {
+    loginMode() {
+      return this.loginModeIndex === 0 ? 'phone' : 'wechat'
+    }
+  },
   onLoad() {
     this.loadSession()
   },
@@ -91,6 +98,9 @@ export default {
       } catch (error) {
         this.toast(error.message || '加载失败')
       }
+    },
+    changeLoginMode(event) {
+      this.loginModeIndex = event.currentIndex
     },
     async handlePhoneLogin() {
       this.loading = true
@@ -189,45 +199,11 @@ export default {
   font-size: 26rpx;
 }
 
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: 28rpx;
-  padding: 28rpx;
-  background: #ffffff;
-  border: 1rpx solid #dce4de;
-  border-radius: 16rpx;
-  box-shadow: 0 14rpx 32rpx rgba(27, 45, 38, 0.1);
-}
-
-.mode-row {
-  display: flex;
-  gap: 12rpx;
-  padding: 8rpx;
-  background: #e8eee9;
-  border-radius: 14rpx;
-}
-
-.mode-btn {
-  flex: 1;
-  height: 70rpx;
-  margin: 0;
-  color: #66736d;
-  background: transparent;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  line-height: 70rpx;
-}
-
-.mode-btn.active {
-  color: #0f766e;
-  background: #ffffff;
-}
-
 .form {
   display: flex;
   flex-direction: column;
   gap: 22rpx;
+  margin-top: 28rpx;
 }
 
 .field {
@@ -284,30 +260,4 @@ export default {
   font-weight: 800;
 }
 
-.child-item {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  padding: 18rpx;
-  background: #f6f8f3;
-  border-radius: 14rpx;
-}
-
-.avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 68rpx;
-  height: 68rpx;
-  color: #ffffff;
-  border-radius: 50%;
-  font-weight: 800;
-}
-
-.child-name {
-  display: block;
-  color: #17201d;
-  font-size: 30rpx;
-  font-weight: 800;
-}
 </style>

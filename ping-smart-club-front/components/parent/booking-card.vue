@@ -1,27 +1,33 @@
 <template>
-  <view class="booking-card">
+  <uni-card :title="item.courseType.name" :extra="item.courseType.creditCost + ' 课时'" :is-shadow="true">
     <view class="card-head">
-      <view class="title-box">
-        <view class="title-line">
-          <text class="course-name">{{ item.courseType.name }}</text>
-          <status-pill :status="item.booking.status" />
-        </view>
-        <text class="course-desc">{{ item.coach.name }} · {{ item.venue.name }}</text>
-      </view>
-      <text class="credit">{{ item.courseType.creditCost }} 课时</text>
+      <text class="course-desc">{{ item.coach.name }} · {{ item.venue.name }}</text>
+      <status-pill :status="item.booking.status" />
     </view>
 
     <view class="meta-list">
-      <text>{{ formatTimeRange(item.schedule.startTime, item.schedule.endTime) }}</text>
-      <text>{{ item.venue.address }}</text>
-      <text v-if="item.booking.waitlistRank">候补第 {{ item.booking.waitlistRank }} 位</text>
-      <text v-if="item.booking.checkedInAt">已于 {{ formatClock(item.booking.checkedInAt) }} 签到</text>
+      <view class="meta-line">
+        <uni-icons type="calendar" size="16" color="#66736d" />
+        <text>{{ formatTimeRange(item.schedule.startTime, item.schedule.endTime) }}</text>
+      </view>
+      <view class="meta-line">
+        <uni-icons type="location" size="16" color="#66736d" />
+        <text>{{ item.venue.address }}</text>
+      </view>
+      <view v-if="item.booking.waitlistRank" class="meta-line">
+        <uni-icons type="info" size="16" color="#66736d" />
+        <text>候补第 {{ item.booking.waitlistRank }} 位</text>
+      </view>
+      <view v-if="item.booking.checkedInAt" class="meta-line">
+        <uni-icons type="checkbox-filled" size="16" color="#0f766e" />
+        <text>已于 {{ formatClock(item.booking.checkedInAt) }} 签到</text>
+      </view>
     </view>
 
     <view v-if="canCancel || signInState.visible" class="actions">
       <button
         v-if="signInState.visible"
-        class="ghost-btn"
+        class="plain-btn"
         :disabled="!signInState.enabled"
         @click="$emit('checkin', item.booking.id)"
       >
@@ -29,7 +35,7 @@
       </button>
       <button v-if="canCancel" class="danger-btn" @click="$emit('cancel', item.booking.id)">取消预约</button>
     </view>
-  </view>
+  </uni-card>
 </template>
 
 <script>
@@ -63,67 +69,40 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.booking-card {
-  padding: 28rpx;
-  background: #ffffff;
-  border: 1rpx solid #dce4de;
-  border-radius: 16rpx;
-  box-shadow: 0 10rpx 24rpx rgba(27, 45, 38, 0.08);
-}
-
-.card-head,
-.title-line,
-.actions {
+.card-head {
   display: flex;
   align-items: center;
-}
-
-.card-head {
   justify-content: space-between;
   gap: 20rpx;
-}
-
-.title-box {
-  flex: 1;
-  min-width: 0;
-}
-
-.title-line {
-  gap: 14rpx;
-}
-
-.course-name {
-  color: #17201d;
-  font-size: 34rpx;
-  font-weight: 800;
+  margin-bottom: 18rpx;
 }
 
 .course-desc,
-.meta-list text {
+.meta-line text {
   color: #66736d;
   font-size: 26rpx;
-}
-
-.credit {
-  color: #e36f4b;
-  font-size: 28rpx;
-  font-weight: 800;
 }
 
 .meta-list {
   display: flex;
   flex-direction: column;
+  gap: 12rpx;
+}
+
+.meta-line {
+  display: flex;
+  align-items: center;
   gap: 10rpx;
-  margin-top: 22rpx;
 }
 
 .actions {
+  display: flex;
   justify-content: flex-end;
   gap: 16rpx;
-  margin-top: 24rpx;
+  margin-top: 20rpx;
 }
 
-.ghost-btn,
+.plain-btn,
 .danger-btn {
   height: 68rpx;
   margin: 0;
@@ -133,7 +112,7 @@ export default {
   line-height: 68rpx;
 }
 
-.ghost-btn {
+.plain-btn {
   color: #0f766e;
   background: #edf4f1;
 }
@@ -143,7 +122,7 @@ export default {
   background: #fff2f0;
 }
 
-.ghost-btn[disabled] {
+.plain-btn[disabled] {
   color: #889690;
   background: #eef1ee;
 }

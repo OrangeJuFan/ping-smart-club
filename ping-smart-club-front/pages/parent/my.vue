@@ -4,13 +4,13 @@
       <text class="page-title">个人资料</text>
     </view>
 
-    <view v-if="session.guardian" class="profile-card">
-      <text class="eyebrow">家长账号</text>
+    <uni-card v-if="session.guardian" title="家长账号" :is-shadow="true">
       <text class="profile-name">{{ session.guardian.name }}</text>
       <text class="profile-meta">{{ session.guardian.relation }} · {{ session.guardian.phone }}</text>
-    </view>
+    </uni-card>
 
-    <view v-if="currentStudent" class="student-card">
+    <uni-card v-if="currentStudent" title="当前学员" :is-shadow="true">
+      <view class="student-card">
       <view class="avatar" :style="{ backgroundColor: currentStudent.avatarColor }">
         <text>{{ currentStudent.name.slice(0, 1) }}</text>
       </view>
@@ -19,29 +19,26 @@
         <text class="profile-meta">{{ currentStudent.level }} · {{ currentStudent.age }} 岁 · 剩余 {{ currentStudent.balance }} 课时</text>
         <text class="student-remark">{{ currentStudent.remark }}</text>
       </view>
-    </view>
+      </view>
+    </uni-card>
 
-    <view class="section">
-      <text class="section-title">绑定的孩子</text>
-      <view class="child-list">
-        <view
+    <uni-card title="绑定的孩子" :is-shadow="true">
+      <uni-list>
+        <uni-list-item
           v-for="student in session.students"
           :key="student.id"
-          class="child-item"
-          :class="{ active: student.id === session.selectedStudentId }"
+          clickable
+          :title="student.name"
+          :note="student.level + ' · 剩余 ' + student.balance + ' 课时'"
+          :right-text="student.id === session.selectedStudentId ? '当前' : '切换'"
           @click="switchStudent(student.id)"
-        >
-          <view class="mini-avatar" :style="{ backgroundColor: student.avatarColor }">
-            <text>{{ student.name.slice(0, 1) }}</text>
-          </view>
-          <text>{{ student.name }}</text>
-        </view>
-      </view>
-    </view>
+        />
+      </uni-list>
+    </uni-card>
 
-    <view class="section form-card">
+    <uni-card title="绑定学员" :is-shadow="true">
+      <view class="form-card">
       <view>
-        <text class="section-title">绑定学员</text>
         <text class="form-tip">可继续绑定多个孩子，首页会显示切换入口。</text>
       </view>
       <view class="field">
@@ -53,22 +50,14 @@
         <input v-model="bindForm.phone" maxlength="11" type="number" placeholder="请输入学员手机号" />
       </view>
       <button class="primary-btn" :loading="loading" @click="bindStudent">绑定</button>
-    </view>
+      </view>
+    </uni-card>
 
-    <view class="menu-list">
-      <view class="menu-item" @click="navigate('/pages/parent/appointments')">
-        <text>我的预约</text>
-        <text>›</text>
-      </view>
-      <view class="menu-item" @click="navigate('/pages/parent/records')">
-        <text>课时与成长记录</text>
-        <text>›</text>
-      </view>
-      <view class="menu-item" @click="navigate('/pages/parent/messages')">
-        <text>消息通知</text>
-        <text>›</text>
-      </view>
-    </view>
+    <uni-list class="menu-list">
+      <uni-list-item title="我的预约" show-arrow clickable @click="navigate('/pages/parent/appointments')" />
+      <uni-list-item title="课时与成长记录" show-arrow clickable @click="navigate('/pages/parent/records')" />
+      <uni-list-item title="消息通知" show-arrow clickable @click="navigate('/pages/parent/messages')" />
+    </uni-list>
 
     <view class="button-row">
       <button class="secondary-btn" @click="resetDemo">恢复演示数据</button>
@@ -190,18 +179,6 @@ export default {
   font-weight: 900;
 }
 
-.profile-card,
-.student-card,
-.section,
-.menu-list {
-  margin-bottom: 22rpx;
-  padding: 28rpx;
-  background: #ffffff;
-  border: 1rpx solid #dce4de;
-  border-radius: 16rpx;
-}
-
-.profile-card,
 .form-card,
 .student-info {
   display: flex;
@@ -226,8 +203,6 @@ export default {
 }
 
 .student-card,
-.child-item,
-.menu-item,
 .button-row {
   display: flex;
   align-items: center;
@@ -252,33 +227,8 @@ export default {
   height: 88rpx;
 }
 
-.mini-avatar {
-  width: 54rpx;
-  height: 54rpx;
-}
-
 .student-info {
   flex: 1;
-}
-
-.child-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
-  margin-top: 16rpx;
-}
-
-.child-item {
-  gap: 16rpx;
-  min-height: 78rpx;
-  padding: 0 18rpx;
-  border: 1rpx solid #dce4de;
-  border-radius: 14rpx;
-}
-
-.child-item.active {
-  border-color: #0f766e;
-  background: #edf4f1;
 }
 
 .field {
@@ -307,20 +257,6 @@ export default {
 .primary-btn {
   color: #ffffff;
   background: #0f766e;
-}
-
-.menu-list {
-  padding: 0;
-  overflow: hidden;
-}
-
-.menu-item {
-  justify-content: space-between;
-  min-height: 92rpx;
-  padding: 0 26rpx;
-  color: #17201d;
-  border-bottom: 1rpx solid #edf1ee;
-  font-size: 28rpx;
 }
 
 .button-row {

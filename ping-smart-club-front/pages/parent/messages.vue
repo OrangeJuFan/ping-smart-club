@@ -5,29 +5,26 @@
       <text class="page-title">消息通知</text>
     </view>
 
-    <view class="mode-row">
-      <button class="mode-btn" :class="{ active: filter === 'all' }" @click="filter = 'all'">全部</button>
-      <button class="mode-btn" :class="{ active: filter === 'unread' }" @click="filter = 'unread'">未读</button>
-    </view>
+    <uni-segmented-control
+      :current="filter === 'all' ? 0 : 1"
+      :values="['全部', '未读']"
+      style-type="button"
+      active-color="#0f766e"
+      @clickItem="changeFilter"
+    />
 
-    <view class="list">
-      <view
+    <uni-list v-if="filteredMessages.length" class="list">
+      <uni-list-item
         v-for="item in filteredMessages"
         :key="item.id"
-        class="message-card"
-        :class="{ unread: item.status === 'unread' }"
+        clickable
+        :title="item.title"
+        :note="messageNote(item)"
+        :right-text="item.status === 'unread' ? '未读' : '已读'"
         @click="markRead(item)"
-      >
-        <view class="message-head">
-          <text class="message-title">{{ item.title }}</text>
-          <status-pill :status="item.status" />
-        </view>
-        <text class="message-content">{{ item.content }}</text>
-        <view class="message-foot">
-          <text>{{ typeLabel(item.type) }}</text>
-          <text>{{ formatDateLabel(item.createdAt) }} {{ formatClock(item.createdAt) }}</text>
-        </view>
-      </view>
+      />
+    </uni-list>
+    <view v-else class="list">
       <view v-if="!filteredMessages.length" class="empty-box">
         <text>暂无消息</text>
       </view>
@@ -37,12 +34,8 @@
 
 <script>
 import parentMock from '@/services/parentMock'
-import StatusPill from '@/components/parent/status-pill.vue'
 
 export default {
-  components: {
-    StatusPill
-  },
   data() {
     return {
       filter: 'all',
@@ -68,6 +61,9 @@ export default {
         this.toast(error.message || '加载失败')
       }
     },
+    changeFilter(event) {
+      this.filter = event.currentIndex === 0 ? 'all' : 'unread'
+    },
     async markRead(item) {
       if (item.status === 'read') return
       try {
@@ -88,6 +84,9 @@ export default {
       }
       return labels[type] || '系统消息'
     },
+    messageNote(item) {
+      return `${item.content} · ${this.typeLabel(item.type)} · ${this.formatDateLabel(item.createdAt)} ${this.formatClock(item.createdAt)}`
+    },
     goBack() {
       uni.navigateBack()
     },
@@ -105,10 +104,7 @@ export default {
   background: #f7f8f4;
 }
 
-.nav-row,
-.mode-row,
-.message-head,
-.message-foot {
+.nav-row {
   display: flex;
   align-items: center;
 }
@@ -135,29 +131,6 @@ export default {
   font-weight: 900;
 }
 
-.mode-row {
-  gap: 12rpx;
-  padding: 8rpx;
-  background: #e8eee9;
-  border-radius: 14rpx;
-}
-
-.mode-btn {
-  flex: 1;
-  height: 68rpx;
-  margin: 0;
-  color: #66736d;
-  background: transparent;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  line-height: 68rpx;
-}
-
-.mode-btn.active {
-  color: #0f766e;
-  background: #ffffff;
-}
-
 .list {
   display: flex;
   flex-direction: column;
@@ -165,42 +138,11 @@ export default {
   margin-top: 22rpx;
 }
 
-.message-card,
 .empty-box {
   padding: 26rpx;
   background: #ffffff;
   border: 1rpx solid #dce4de;
   border-radius: 16rpx;
-}
-
-.message-card.unread {
-  background: #fffdf7;
-  border-color: #f1d28c;
-}
-
-.message-head,
-.message-foot {
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.message-title {
-  color: #17201d;
-  font-size: 32rpx;
-  font-weight: 800;
-}
-
-.message-content {
-  display: block;
-  margin-top: 14rpx;
-  color: #3d4843;
-  font-size: 28rpx;
-}
-
-.message-foot {
-  margin-top: 16rpx;
-  color: #66736d;
-  font-size: 24rpx;
 }
 
 .empty-box {
