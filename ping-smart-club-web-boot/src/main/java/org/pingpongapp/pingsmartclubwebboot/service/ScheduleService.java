@@ -2,12 +2,14 @@ package org.pingpongapp.pingsmartclubwebboot.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.pingpongapp.pingsmartclubwebboot.common.BusinessException;
+import org.pingpongapp.pingsmartclubwebboot.common.ErrorCode;
 import org.pingpongapp.pingsmartclubwebboot.mapper.CourseScheduleMapper;
 import org.pingpongapp.pingsmartclubwebboot.pojo.Coach;
 import org.pingpongapp.pingsmartclubwebboot.pojo.CourseProduct;
 import org.pingpongapp.pingsmartclubwebboot.pojo.CourseSchedule;
 import org.pingpongapp.pingsmartclubwebboot.pojo.Venue;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
@@ -35,6 +37,7 @@ public class ScheduleService {
         this.notificationService = notificationService;
     }
 
+    @Transactional
     public CourseSchedule create(CourseSchedule schedule) {
         fillNamesAndValidate(schedule);
         validateTime(schedule);
@@ -46,6 +49,7 @@ public class ScheduleService {
         return schedule;
     }
 
+    @Transactional
     public CourseSchedule update(Long id, CourseSchedule schedule) {
         getById(id);
         schedule.setId(id);
@@ -56,6 +60,7 @@ public class ScheduleService {
         return getById(id);
     }
 
+    @Transactional
     public void cancel(Long id) {
         CourseSchedule schedule = getById(id);
         schedule.setStatus("CANCELLED");
@@ -64,6 +69,7 @@ public class ScheduleService {
             "课程安排 " + schedule.getCourseProductName() + " 已取消");
     }
 
+    @Transactional
     public CourseSchedule changeCoach(Long id, Long coachId) {
         CourseSchedule schedule = getById(id);
         Coach coach = coachService.getById(coachId);
@@ -79,7 +85,15 @@ public class ScheduleService {
     public CourseSchedule getById(Long id) {
         CourseSchedule schedule = courseScheduleMapper.selectById(id);
         if (schedule == null) {
-            throw BusinessException.notFound("课程安排不存在");
+            throw BusinessException.of(ErrorCode.SCHEDULE_NOT_FOUND);
+        }
+        return schedule;
+    }
+
+    public CourseSchedule getByIdForUpdate(Long id) {
+        CourseSchedule schedule = courseScheduleMapper.selectByIdForUpdate(id);
+        if (schedule == null) {
+            throw BusinessException.of(ErrorCode.SCHEDULE_NOT_FOUND);
         }
         return schedule;
     }
@@ -129,23 +143,23 @@ public class ScheduleService {
     }
 
     private void validateConflict(Long excludeScheduleId, Long coachId, Long venueId, LocalDateTime startTime, LocalDateTime endTime) {
-        Long coachConflict = courseScheduleMapper.selectCount(new LambdaQueryWrapper<CourseSchedule>()
-            .ne(excludeScheduleId != null, CourseSchedule::getId, excludeScheduleId)
-            .eq(CourseSchedule::getCoachId, coachId)
-            .ne(CourseSchedule::getStatus, "CANCELLED")
-            .lt(CourseSchedule::getStartTime, endTime)
-            .gt(CourseSchedule::getEndTime, startTime));
-        if (coachConflict > 0) {
-            throw BusinessException.conflict("教练时间冲突");
+        List<Long> coachConflictIds = courseScheduleMapper.selectCoachConflictIdsForUpdate(
+            excludeScheduleId,
+            coachId,
+            startTime,
+            endTime
+        );
+        if (!coachConflictIds.isEmpty()) {
+            throw BusinessException.of(ErrorCode.SCHEDULE_COACH_CONFLICT);
         }
-        Long venueConflict = courseScheduleMapper.selectCount(new LambdaQueryWrapper<CourseSchedule>()
-            .ne(excludeScheduleId != null, CourseSchedule::getId, excludeScheduleId)
-            .eq(CourseSchedule::getVenueId, venueId)
-            .ne(CourseSchedule::getStatus, "CANCELLED")
-            .lt(CourseSchedule::getStartTime, endTime)
-            .gt(CourseSchedule::getEndTime, startTime));
-        if (venueConflict > 0) {
-            throw BusinessException.conflict("场地时间冲突");
+        List<Long> venueConflictIds = courseScheduleMapper.selectVenueConflictIdsForUpdate(
+            excludeScheduleId,
+            venueId,
+            startTime,
+            endTime
+        );
+        if (!venueConflictIds.isEmpty()) {
+            throw BusinessException.of(ErrorCode.SCHEDULE_VENUE_CONFLICT);
         }
     }
 }

@@ -13,6 +13,7 @@ public class LessonTransaction {
 
     @TableId(type = IdType.AUTO)
     private Long id;
+    private String bizNo;
     private Long studentId;
     private Long bookingId;
     private String transactionType;

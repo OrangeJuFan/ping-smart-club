@@ -18,6 +18,7 @@
 - Swagger：`/api/swagger-ui.html`
 - 数据库：`ping_smart_club`
 - 第一阶段 SQL：`sql/ping-smart-club-phase1.sql`
+- 已初始化库升级脚本：`sql/ping-smart-club-phase1-hardening.sql`
 
 ## 二、初始化数据库
 
@@ -33,6 +34,12 @@ CREATE DATABASE IF NOT EXISTS ping_smart_club
 mysql -uroot -p ping_smart_club < sql/ping-smart-club-phase1.sql
 ```
 
+如果数据库已经执行过旧版第一阶段 SQL，请执行加固脚本：
+
+```bash
+mysql -uroot -p ping_smart_club < sql/ping-smart-club-phase1-hardening.sql
+```
+
 内置演示账号：
 
 | 角色 | 登录接口 | 账号/手机号 | 密码 |
@@ -41,8 +48,8 @@ mysql -uroot -p ping_smart_club < sql/ping-smart-club-phase1.sql
 | 教练 | `/api/auth/coach/login` | `coach_demo` 或 `13800000001` | `123456` |
 | 学员/家长 | `/api/auth/student/login` | `student_demo` 或 `13800000002` | `123456` |
 
-说明：第一阶段密码为明文字段，后续生产化需要切换为 BCrypt/SM3 等密码散列。
-新增教练或学员时，如果填写了手机号，后端会自动生成对应登录账号，默认密码为 `123456`；学员优先使用家长手机号作为登录手机号。
+说明：历史明文密码仍可登录，首次登录成功后会自动迁移为 PBKDF2 散列；新增教练或学员时，如果填写了手机号，后端会自动生成对应登录账号，默认密码为 `123456`，并直接保存为密码散列。学员优先使用家长手机号作为登录手机号。
+登录 Token 不再保存在 JVM 内存里，后端会将 Token 摘要写入 `psc_auth_session`，支持服务重启后继续校验、集中吊销和后续多实例演进。
 
 ## 三、统一协议
 
@@ -58,10 +65,26 @@ Content-Type: application/json
 ```json
 {
   "code": 0,
+  "errorCode": "SUCCESS",
   "message": "success",
-  "data": {}
+  "data": {},
+  "traceId": null
 }
 ```
+
+失败响应示例：
+
+```json
+{
+  "code": 409,
+  "errorCode": "BOOKING_DUPLICATE",
+  "message": "不能重复预约同一课程",
+  "data": null,
+  "traceId": null
+}
+```
+
+未知系统异常不会再直接返回内部异常信息，响应会包含 `traceId`，服务端日志可用该值排查。
 
 常见错误码：
 
@@ -73,6 +96,19 @@ Content-Type: application/json
 | 404 | 数据不存在 |
 | 409 | 业务冲突，例如重复预约、教练/场地时间冲突 |
 | 500 | 服务异常 |
+
+常见业务错误码：
+
+| errorCode | 含义 |
+| --- | --- |
+| AUTH_INVALID_CREDENTIALS | 账号或密码错误 |
+| AUTH_TOKEN_INVALID | 登录失效 |
+| SCHEDULE_COACH_CONFLICT | 教练时间冲突 |
+| SCHEDULE_VENUE_CONFLICT | 场地时间冲突 |
+| BOOKING_DUPLICATE | 重复预约或重复候补 |
+| BOOKING_CAPACITY_FULL | 课程名额已满 |
+| LESSON_BALANCE_NOT_ENOUGH | 课时余额不足 |
+| LESSON_TRANSACTION_DUPLICATE | 课时流水已处理 |
 
 ## 四、登录鉴权接口
 
@@ -363,6 +399,7 @@ Content-Type: application/json
 - 未重复预约同一课程
 
 第一阶段策略：预约不扣课时，后台确认到课或教练确认消课后扣课时。
+实现上会在事务内锁定课程安排行，并用 `psc_booking.active_key` 约束同一学员在同一课程安排下只能存在一个活跃预约或候补，降低并发重复预约风险。
 
 ### 学员取消预约
 
@@ -388,6 +425,8 @@ Content-Type: application/json
 - 预约状态变为 `COMPLETED`
 - 按课程产品 `lessonCount` 扣减课时
 - 生成课时流水
+
+消课流水使用业务单号 `CONSUME:BOOKING:{bookingId}` 幂等，避免同一预约重复扣课时。
 
 ### 加入候补
 
@@ -599,8 +638,8 @@ Content-Type: application/json
 
 ## 十五、后续生产化事项
 
-- 替换明文密码为安全散列
-- Token 从内存切换到 Redis 或 JWT
+- 按合规要求将 PBKDF2 切换或升级为 BCrypt/SM3/国密方案
+- Token 会话从数据库进一步切换到 Redis/JWT 黑名单或统一认证中心
 - 增加数据库外键、唯一约束和更细的状态机校验
 - 微信小程序登录、微信订阅消息、短信通知
 - 课前提醒定时任务

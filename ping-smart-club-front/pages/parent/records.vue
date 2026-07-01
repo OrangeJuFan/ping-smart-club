@@ -1,9 +1,6 @@
 <template>
   <view class="page">
-    <view class="nav-row">
-      <button class="back-btn" @click="goBack">返回</button>
-      <text class="page-title">课时与成长</text>
-    </view>
+    <page-nav title="课时与成长" @back="goBack" />
 
     <view v-if="summary" class="balance-card">
       <view>
@@ -59,8 +56,12 @@
 
 <script>
 import parentMock from '@/services/parentMock'
+import PageNav from '@/components/parent/page-nav.vue'
 
 export default {
+  components: {
+    PageNav
+  },
   data() {
     return {
       summary: null,
@@ -111,37 +112,11 @@ export default {
   background: #f7f8f4;
 }
 
-.nav-row,
 .balance-card,
 .row-card,
 .growth-head {
   display: flex;
   align-items: center;
-}
-
-.nav-row {
-  gap: 18rpx;
-  margin-bottom: 22rpx;
-}
-
-.back-btn {
-  width: 118rpx;
-  height: 62rpx;
-  margin: 0;
-  color: #17201d;
-  background: #ffffff;
-  border-radius: 12rpx;
-  font-size: 26rpx;
-  line-height: 62rpx;
-}
-
-.page-title {
-  color: #17201d;
-  font-weight: 900;
-}
-
-.page-title {
-  font-size: 40rpx;
 }
 
 .balance-card {

@@ -22,7 +22,7 @@ router.beforeEach((to) => {
 
   const denied = to.matched.some((record) => !auth.hasPermission(record.meta.permission));
   if (denied) {
-    return { name: 'dashboard' };
+    return { name: 'forbidden', query: { from: to.fullPath } };
   }
 
   return true;

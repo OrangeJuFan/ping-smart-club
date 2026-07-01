@@ -1,13 +1,11 @@
 import 'vue-router';
 
+import type { AdminMenuMeta } from '@/types/permission';
+
 export {};
 
 declare module 'vue-router' {
-  interface RouteMeta {
-    title?: string;
-    icon?: string;
+  interface RouteMeta extends Partial<AdminMenuMeta> {
     requiresAuth?: boolean;
-    permission?: string;
-    hidden?: boolean;
   }
 }

@@ -3,8 +3,10 @@ package org.pingpongapp.pingsmartclubwebboot.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.pingpongapp.pingsmartclubwebboot.auth.AuthRole;
 import org.pingpongapp.pingsmartclubwebboot.auth.AuthUser;
+import org.pingpongapp.pingsmartclubwebboot.auth.PasswordService;
 import org.pingpongapp.pingsmartclubwebboot.auth.TokenStore;
 import org.pingpongapp.pingsmartclubwebboot.common.BusinessException;
+import org.pingpongapp.pingsmartclubwebboot.common.ErrorCode;
 import org.pingpongapp.pingsmartclubwebboot.dto.AuthDtos;
 import org.pingpongapp.pingsmartclubwebboot.mapper.AppUserMapper;
 import org.pingpongapp.pingsmartclubwebboot.pojo.AppUser;
@@ -16,10 +18,12 @@ public class AuthService {
 
     private final AppUserMapper appUserMapper;
     private final TokenStore tokenStore;
+    private final PasswordService passwordService;
 
-    public AuthService(AppUserMapper appUserMapper, TokenStore tokenStore) {
+    public AuthService(AppUserMapper appUserMapper, TokenStore tokenStore, PasswordService passwordService) {
         this.appUserMapper = appUserMapper;
         this.tokenStore = tokenStore;
+        this.passwordService = passwordService;
     }
 
     public AuthDtos.LoginResponse login(AuthDtos.LoginRequest request, AuthRole role) {
@@ -37,8 +41,12 @@ public class AuthService {
             throw BusinessException.badRequest("账号或手机号不能为空");
         }
         AppUser user = appUserMapper.selectOne(wrapper);
-        if (user == null || !request.password().equals(user.getPassword())) {
-            throw BusinessException.unauthorized("账号或密码错误");
+        if (user == null || !passwordService.matches(request.password(), user.getPassword())) {
+            throw BusinessException.of(ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+        if (passwordService.needsMigration(user.getPassword())) {
+            user.setPassword(passwordService.encode(request.password()));
+            appUserMapper.updateById(user);
         }
         AuthUser authUser = new AuthUser(user.getId(), user.getUsername(), user.getDisplayName(), role, user.getRelatedId());
         String token = tokenStore.issue(authUser);

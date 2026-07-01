@@ -17,6 +17,7 @@ public class LessonAccount {
     private Integer balance;
     private Integer totalPurchased;
     private Integer totalConsumed;
+    private Integer version;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

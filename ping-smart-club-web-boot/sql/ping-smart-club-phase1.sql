@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS `psc_user` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID',
   `username` varchar(64) DEFAULT NULL COMMENT '登录账号',
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
-  `password` varchar(128) NOT NULL COMMENT '密码，第一阶段明文，生产需替换为加密散列',
+  `password` varchar(255) NOT NULL COMMENT '密码散列；兼容历史明文并在首次登录后自动迁移',
   `role` varchar(32) NOT NULL COMMENT 'ADMIN/COACH/STUDENT_PARENT',
   `related_id` bigint DEFAULT NULL COMMENT '关联教练ID或学员ID',
   `display_name` varchar(64) DEFAULT NULL COMMENT '展示名',
@@ -16,6 +16,25 @@ CREATE TABLE IF NOT EXISTS `psc_user` (
   UNIQUE KEY `uk_psc_user_username` (`username`),
   KEY `idx_psc_user_phone_role` (`phone`, `role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='登录用户表';
+
+CREATE TABLE IF NOT EXISTS `psc_auth_session` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '会话ID',
+  `token_hash` varchar(96) NOT NULL COMMENT '访问令牌SHA-256摘要',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `username` varchar(64) DEFAULT NULL COMMENT '登录账号快照',
+  `display_name` varchar(64) DEFAULT NULL COMMENT '展示名快照',
+  `role` varchar(32) NOT NULL COMMENT '角色快照',
+  `related_id` bigint DEFAULT NULL COMMENT '关联业务ID快照',
+  `status` varchar(16) NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE/REVOKED/EXPIRED',
+  `expire_at` datetime NOT NULL COMMENT '过期时间',
+  `revoked_at` datetime DEFAULT NULL COMMENT '吊销时间',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_psc_auth_session_token_hash` (`token_hash`),
+  KEY `idx_psc_auth_session_user_status` (`user_id`, `status`),
+  KEY `idx_psc_auth_session_expire` (`expire_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='登录会话表';
 
 CREATE TABLE IF NOT EXISTS `psc_student` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '学员ID',
@@ -140,6 +159,7 @@ CREATE TABLE IF NOT EXISTS `psc_booking` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `schedule_id` bigint NOT NULL COMMENT '课程安排ID',
   `student_id` bigint NOT NULL COMMENT '学员ID',
+  `active_key` varchar(64) DEFAULT NULL COMMENT '活跃预约唯一键；终态置空',
   `status` varchar(16) NOT NULL DEFAULT 'BOOKED' COMMENT 'BOOKED/CANCELLED/COMPLETED/ABSENT/WAITING',
   `source` varchar(16) DEFAULT NULL COMMENT 'STUDENT/ADMIN/COACH',
   `cancel_reason` varchar(500) DEFAULT NULL,
@@ -150,6 +170,7 @@ CREATE TABLE IF NOT EXISTS `psc_booking` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_psc_booking_active` (`active_key`),
   KEY `idx_psc_booking_schedule_status` (`schedule_id`, `status`),
   KEY `idx_psc_booking_student_status` (`student_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预约记录表';
@@ -174,6 +195,7 @@ CREATE TABLE IF NOT EXISTS `psc_lesson_account` (
   `balance` int NOT NULL DEFAULT 0 COMMENT '课时余额',
   `total_purchased` int NOT NULL DEFAULT 0 COMMENT '累计购买课时',
   `total_consumed` int NOT NULL DEFAULT 0 COMMENT '累计消耗课时',
+  `version` int NOT NULL DEFAULT 0 COMMENT '乐观锁版本，当前配合行锁预留',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -182,6 +204,7 @@ CREATE TABLE IF NOT EXISTS `psc_lesson_account` (
 
 CREATE TABLE IF NOT EXISTS `psc_lesson_transaction` (
   `id` bigint NOT NULL AUTO_INCREMENT,
+  `biz_no` varchar(96) NOT NULL COMMENT '业务单号，保证扣课时等操作幂等',
   `student_id` bigint NOT NULL COMMENT '学员ID',
   `booking_id` bigint DEFAULT NULL COMMENT '预约ID',
   `transaction_type` varchar(16) NOT NULL COMMENT 'PURCHASE/CONSUME/REFUND/ADJUST',
@@ -192,6 +215,7 @@ CREATE TABLE IF NOT EXISTS `psc_lesson_transaction` (
   `remark` varchar(500) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_psc_lesson_tx_biz_no` (`biz_no`),
   KEY `idx_psc_lesson_tx_student` (`student_id`, `created_at`),
   KEY `idx_psc_lesson_tx_booking` (`booking_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课时流水表';

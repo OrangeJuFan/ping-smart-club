@@ -9,18 +9,22 @@ import DataTable, { type TableColumn } from '@/components/DataTable.vue';
 import DataToolbar from '@/components/DataToolbar.vue';
 import DetailDrawer from '@/components/DetailDrawer.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import { useCrudPage } from '@/composables/useCrudPage';
 import type { NotificationLog } from '@/types/domain';
 import { formatDateTime } from '@/utils/date';
 import { includesText } from '@/utils/format';
 
 const logs = ref<NotificationLog[]>([]);
-const keyword = ref('');
 const typeFilter = ref('');
 const channelFilter = ref('');
 const statusFilter = ref('');
-const loading = ref(false);
 const detailOpen = ref(false);
 const selected = ref<NotificationLog | null>(null);
+const crud = useCrudPage<NotificationLog>(async () => {
+  const resp = await adminApi.getNotifications();
+  logs.value = resp.data;
+});
+const { keyword, loading, errorText, load } = crud;
 
 const columns: TableColumn[] = [
   { key: 'type', label: '通知类型' },
@@ -39,16 +43,6 @@ const rows = computed(() =>
     .filter((log) => !statusFilter.value || log.status === statusFilter.value)
     .filter((log) => [log.type, log.receiver, log.channel, log.content].some((value) => includesText(value, keyword.value))),
 );
-
-const load = async () => {
-  loading.value = true;
-  try {
-    const resp = await adminApi.getNotifications();
-    logs.value = resp.data;
-  } finally {
-    loading.value = false;
-  }
-};
 
 const openDetail = (log: NotificationLog) => {
   selected.value = log;
@@ -98,7 +92,7 @@ onMounted(load);
         </template>
       </DataToolbar>
 
-      <DataTable :columns="columns" :rows="rows">
+      <DataTable :columns="columns" :rows="rows" :loading="loading" :error-text="errorText" @retry="load">
         <template #cell-content="{ value }">
           <span class="content-cell">{{ value }}</span>
         </template>

@@ -2,8 +2,18 @@ package org.pingpongapp.pingsmartclubwebboot.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.pingpongapp.pingsmartclubwebboot.dto.StatsSummaryResponse;
-import org.pingpongapp.pingsmartclubwebboot.mapper.*;
-import org.pingpongapp.pingsmartclubwebboot.pojo.*;
+import org.pingpongapp.pingsmartclubwebboot.mapper.BookingMapper;
+import org.pingpongapp.pingsmartclubwebboot.mapper.CoachMapper;
+import org.pingpongapp.pingsmartclubwebboot.mapper.CourseScheduleMapper;
+import org.pingpongapp.pingsmartclubwebboot.mapper.NotificationRecordMapper;
+import org.pingpongapp.pingsmartclubwebboot.mapper.StudentMapper;
+import org.pingpongapp.pingsmartclubwebboot.mapper.WaitlistEntryMapper;
+import org.pingpongapp.pingsmartclubwebboot.pojo.Booking;
+import org.pingpongapp.pingsmartclubwebboot.pojo.Coach;
+import org.pingpongapp.pingsmartclubwebboot.pojo.CourseSchedule;
+import org.pingpongapp.pingsmartclubwebboot.pojo.NotificationRecord;
+import org.pingpongapp.pingsmartclubwebboot.pojo.Student;
+import org.pingpongapp.pingsmartclubwebboot.pojo.WaitlistEntry;
 import org.springframework.stereotype.Service;
 
 @Service

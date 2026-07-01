@@ -1,6 +1,7 @@
 package org.pingpongapp.pingsmartclubwebboot.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.pingpongapp.pingsmartclubwebboot.auth.PasswordService;
 import org.pingpongapp.pingsmartclubwebboot.common.BusinessException;
 import org.pingpongapp.pingsmartclubwebboot.mapper.AppUserMapper;
 import org.pingpongapp.pingsmartclubwebboot.mapper.StudentMapper;
@@ -17,11 +18,16 @@ public class StudentService {
     private final StudentMapper studentMapper;
     private final AppUserMapper appUserMapper;
     private final LessonAccountService lessonAccountService;
+    private final PasswordService passwordService;
 
-    public StudentService(StudentMapper studentMapper, AppUserMapper appUserMapper, LessonAccountService lessonAccountService) {
+    public StudentService(StudentMapper studentMapper,
+                          AppUserMapper appUserMapper,
+                          LessonAccountService lessonAccountService,
+                          PasswordService passwordService) {
         this.studentMapper = studentMapper;
         this.appUserMapper = appUserMapper;
         this.lessonAccountService = lessonAccountService;
+        this.passwordService = passwordService;
     }
 
     public Student create(Student student) {
@@ -86,7 +92,7 @@ public class StudentService {
         AppUser user = new AppUser();
         user.setUsername("student_" + student.getId());
         user.setPhone(loginPhone);
-        user.setPassword("123456");
+        user.setPassword(passwordService.encode("123456"));
         user.setRole("STUDENT_PARENT");
         user.setRelatedId(student.getId());
         user.setDisplayName(student.getName());

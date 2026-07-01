@@ -11,10 +11,10 @@
 | MyBatis-Plus | 3.5.5 | 数据持久化框架（Spring Boot 3.x 兼容版本） |
 | MySQL | 8.0.33 | 数据库驱动 |
 | HikariCP | 内置 | Spring Boot 默认连接池 |
-| Redis | Spring Boot 管理 | 通过 spring-boot-starter-data-redis |
-| RabbitMQ | Spring Boot 管理 | 通过 spring-boot-starter-amqp |
+| Redis | 预留 | 当前依赖未启用，后续可用于缓存、会话和候补队列 |
+| RabbitMQ | 预留 | 当前依赖未启用，后续可用于通知异步化 |
 | Lombok | 1.18.30 | 代码简化工具 |
-| Spring Security | 6.x | Spring Boot 3.x 内置版本 |
+| Spring Security | 预留 | 当前使用自定义拦截器，后续可切换标准安全链 |
 | Logback | 内置 | Spring Boot 默认日志框架 |
 
 ## 配置文件说明
@@ -31,23 +31,21 @@
 ## 配置类说明
 
 ### 1. RedisConfig
-- 配置 RedisTemplate
-- 使用 Jackson2JsonRedisSerializer 进行 JSON 序列化
-- Key 使用 StringRedisSerializer
+- 预留 RedisTemplate 配置
+- 当前 Redis 依赖未启用，启用前需同步打开 pom.xml 依赖
 
 ### 2. RabbitMQConfig
-- 配置 RabbitTemplate
-- 定义示例队列和交换机
-- 使用 Jackson2JsonMessageConverter 进行消息序列化
+- 预留 RabbitTemplate 配置
+- 当前 RabbitMQ 依赖未启用，启用前需同步打开 pom.xml 依赖
 
 ### 3. MyBatisPlusConfig
 - 配置分页插件
 - 扫描 Mapper 接口包路径：`org.pingpongapp.pingsmartclubwebboot.mapper`
 
 ### 4. SecurityConfig
-- Spring Security 基础配置
-- 当前为开发阶段配置（允许所有请求）
-- 生产环境需要根据实际需求配置权限规则
+- Spring Security 预留配置
+- 当前正式生效的是 `AuthInterceptor + RequireRole + psc_auth_session`
+- 后续如切换 Spring Security，需要同步启用 pom.xml 依赖和过滤链
 
 ## Docker 部署
 
@@ -106,19 +104,20 @@ kubectl get ingress
 | DB_HOST | 数据库主机 | localhost |
 | DB_PORT | 数据库端口 | 3306 |
 | DB_NAME | 数据库名 | ping_smart_club |
-| DB_USER | 数据库用户名 | root |
-| DB_PASSWORD | 数据库密码 | root |
+| DB_USER | 数据库用户名 | 无，生产必须注入 |
+| DB_PASSWORD | 数据库密码 | 无，生产必须注入 |
 | REDIS_HOST | Redis 主机 | localhost |
 | REDIS_PORT | Redis 端口 | 6379 |
 | REDIS_PASSWORD | Redis 密码 | 空 |
 | RABBITMQ_HOST | RabbitMQ 主机 | localhost |
 | RABBITMQ_PORT | RabbitMQ 端口 | 5672 |
-| RABBITMQ_USER | RabbitMQ 用户名 | guest |
-| RABBITMQ_PASSWORD | RabbitMQ 密码 | guest |
+| RABBITMQ_USER | RabbitMQ 用户名 | 无，生产必须注入 |
+| RABBITMQ_PASSWORD | RabbitMQ 密码 | 无，生产必须注入 |
 
 ## 数据库初始化
 
-在 `src/main/resources/sql/` 目录下创建初始化 SQL 脚本。
+新库执行 `sql/ping-smart-club-phase1.sql`。
+旧版第一阶段库执行 `sql/ping-smart-club-phase1-hardening.sql` 做加固迁移。
 
 ## 日志配置
 
@@ -129,17 +128,17 @@ kubectl get ingress
 
 ## 注意事项
 
-1. **Spring Security**: 当前配置为开发模式（允许所有请求），生产环境需要配置具体的权限规则。
+1. **认证鉴权**: 当前使用 `AuthInterceptor + RequireRole + psc_auth_session`，密码会在首次登录后迁移为 PBKDF2 散列。
 
 2. **数据库连接**: 首次运行前需要创建数据库并执行初始化脚本。
 
 3. **Redis 连接池**: 使用 Lettuce 连接池，配置在 application.yml 中。
 
-4. **RabbitMQ**: 默认使用 guest/guest，生产环境请修改为强密码。
+4. **RabbitMQ**: 当前为预留配置，启用前请打开依赖并使用强密码。
 
 5. **Kubernetes**: 部署前请确保镜像已构建并推送到镜像仓库，或使用本地镜像。
 
-6. **健康检查**: K8s 部署配置中使用了 `/api/actuator/health` 端点，如需使用请添加 Spring Boot Actuator 依赖。
+6. **健康检查**: K8s 部署配置使用当前已存在的 `/api/test/health`。如果后续启用 Actuator，可再切换为 `/api/actuator/health`。
 
 ## 开发建议
 
@@ -147,4 +146,3 @@ kubectl get ingress
 2. 生产环境使用环境变量 + `application-prod.yml` 配置
 3. 敏感信息（密码、密钥）不要提交到代码仓库
 4. 使用 ConfigMap 和 Secret 管理 K8s 配置
-

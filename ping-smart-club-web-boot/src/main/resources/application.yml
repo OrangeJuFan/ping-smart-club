@@ -7,9 +7,9 @@ spring:
   # 数据源配置 (HikariCP)
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ping_smart_club?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: QAZwsx123!
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:ping_smart_club}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       # 连接池名称
@@ -144,9 +144,3 @@ springdoc:
     default-model-expand-depth: 1
     # 默认模型展开深度
     default-model-render-depth: 3
-
-# Spring Security 配置（可根据需要调整）
-# security:
-#   user:
-#     name: admin
-#     password: admin123

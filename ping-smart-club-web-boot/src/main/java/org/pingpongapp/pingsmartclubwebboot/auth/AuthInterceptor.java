@@ -3,6 +3,7 @@ package org.pingpongapp.pingsmartclubwebboot.auth;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.pingpongapp.pingsmartclubwebboot.common.BusinessException;
+import org.pingpongapp.pingsmartclubwebboot.common.ErrorCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -26,7 +27,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String token = resolveBearerToken(request);
         AuthUser user = tokenStore.resolve(token)
-            .orElseThrow(() -> BusinessException.unauthorized("登录已失效，请重新登录"));
+            .orElseThrow(() -> BusinessException.of(ErrorCode.AUTH_TOKEN_INVALID));
         AuthContext.setUser(user);
 
         RequireRole requireRole = handlerMethod.getMethodAnnotation(RequireRole.class);
@@ -35,7 +36,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
         if (requireRole != null && Arrays.stream(requireRole.value()).noneMatch(role -> role == user.getRole())) {
             AuthContext.clear();
-            throw BusinessException.forbidden("当前账号无权访问该接口");
+            throw BusinessException.of(ErrorCode.COMMON_FORBIDDEN);
         }
         return true;
     }
@@ -48,7 +49,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     private String resolveBearerToken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            throw BusinessException.unauthorized("缺少 Authorization Bearer Token");
+            throw BusinessException.of(ErrorCode.AUTH_TOKEN_MISSING);
         }
         return authorization.substring("Bearer ".length()).trim();
     }

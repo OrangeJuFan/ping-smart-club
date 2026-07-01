@@ -40,7 +40,9 @@ const iconMap = {
 };
 
 const navItems = computed(() =>
-  adminChildren.filter((item) => !item.meta?.hidden && auth.hasPermission(item.meta?.permission)),
+  adminChildren
+    .filter((item) => !item.meta?.hidden && auth.hasPermission(item.meta?.permission))
+    .sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0)),
 );
 
 const logout = () => {

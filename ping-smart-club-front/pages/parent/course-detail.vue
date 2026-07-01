@@ -1,9 +1,6 @@
 <template>
   <view class="page">
-    <view class="nav-row">
-      <button class="back-btn" @click="goBack">返回</button>
-      <text class="page-title">课程详情</text>
-    </view>
+    <page-nav title="课程详情" @back="goBack" />
 
     <view v-if="detail" class="hero-card">
       <view class="hero-head">
@@ -33,10 +30,12 @@
 
 <script>
 import parentMock from '@/services/parentMock'
+import PageNav from '@/components/parent/page-nav.vue'
 import StatusPill from '@/components/parent/status-pill.vue'
 
 export default {
   components: {
+    PageNav,
     StatusPill
   },
   data() {
@@ -103,32 +102,9 @@ export default {
   background: #f7f8f4;
 }
 
-.nav-row,
 .hero-head {
   display: flex;
   align-items: center;
-}
-
-.nav-row {
-  gap: 18rpx;
-  margin-bottom: 22rpx;
-}
-
-.back-btn {
-  width: 118rpx;
-  height: 62rpx;
-  margin: 0;
-  color: #17201d;
-  background: #ffffff;
-  border-radius: 12rpx;
-  font-size: 26rpx;
-  line-height: 62rpx;
-}
-
-.page-title {
-  color: #17201d;
-  font-size: 40rpx;
-  font-weight: 900;
 }
 
 .hero-card {

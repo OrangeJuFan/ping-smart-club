@@ -1,9 +1,6 @@
 <template>
   <view class="page">
-    <view class="nav-row">
-      <button class="back-btn" @click="goBack">返回</button>
-      <text class="page-title">我的预约</text>
-    </view>
+    <page-nav title="我的预约" @back="goBack" />
 
     <uni-segmented-control
       :current="activeIndex"
@@ -31,10 +28,12 @@
 <script>
 import parentMock from '@/services/parentMock'
 import BookingCard from '@/components/parent/booking-card.vue'
+import PageNav from '@/components/parent/page-nav.vue'
 
 export default {
   components: {
-    BookingCard
+    BookingCard,
+    PageNav
   },
   data() {
     return {
@@ -119,30 +118,6 @@ export default {
   min-height: 100vh;
   padding: 24rpx;
   background: #f7f8f4;
-}
-
-.nav-row {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  margin-bottom: 22rpx;
-}
-
-.back-btn {
-  width: 118rpx;
-  height: 62rpx;
-  margin: 0;
-  color: #17201d;
-  background: #ffffff;
-  border-radius: 12rpx;
-  font-size: 26rpx;
-  line-height: 62rpx;
-}
-
-.page-title {
-  color: #17201d;
-  font-size: 40rpx;
-  font-weight: 900;
 }
 
 .list {

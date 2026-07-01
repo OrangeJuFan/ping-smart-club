@@ -1,6 +1,7 @@
 package org.pingpongapp.pingsmartclubwebboot.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.pingpongapp.pingsmartclubwebboot.auth.PasswordService;
 import org.pingpongapp.pingsmartclubwebboot.common.BusinessException;
 import org.pingpongapp.pingsmartclubwebboot.mapper.AppUserMapper;
 import org.pingpongapp.pingsmartclubwebboot.mapper.CoachAvailabilityMapper;
@@ -22,15 +23,18 @@ public class CoachService {
     private final AppUserMapper appUserMapper;
     private final CoachAvailabilityMapper coachAvailabilityMapper;
     private final CoachLeaveMapper coachLeaveMapper;
+    private final PasswordService passwordService;
 
     public CoachService(CoachMapper coachMapper,
                         AppUserMapper appUserMapper,
                         CoachAvailabilityMapper coachAvailabilityMapper,
-                        CoachLeaveMapper coachLeaveMapper) {
+                        CoachLeaveMapper coachLeaveMapper,
+                        PasswordService passwordService) {
         this.coachMapper = coachMapper;
         this.appUserMapper = appUserMapper;
         this.coachAvailabilityMapper = coachAvailabilityMapper;
         this.coachLeaveMapper = coachLeaveMapper;
+        this.passwordService = passwordService;
     }
 
     public Coach create(Coach coach) {
@@ -130,7 +134,7 @@ public class CoachService {
         AppUser user = new AppUser();
         user.setUsername("coach_" + coach.getId());
         user.setPhone(coach.getPhone());
-        user.setPassword("123456");
+        user.setPassword(passwordService.encode("123456"));
         user.setRole("COACH");
         user.setRelatedId(coach.getId());
         user.setDisplayName(coach.getName());

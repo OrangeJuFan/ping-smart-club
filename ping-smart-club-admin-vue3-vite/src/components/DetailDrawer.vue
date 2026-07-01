@@ -1,19 +1,39 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue';
+import { computed } from 'vue';
 
 import BaseButton from '@/components/BaseButton.vue';
 
-defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean;
   title: string;
   width?: string;
-}>();
+  mode?: 'create' | 'edit' | 'view';
+  submitLoading?: boolean;
+  closeConfirm?: boolean;
+}>(), {
+  submitLoading: false,
+  closeConfirm: false,
+});
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
+  close: [];
 }>();
 
-const close = () => emit('update:modelValue', false);
+const modeText = {
+  create: '新增',
+  edit: '编辑',
+  view: '查看',
+};
+
+const modeLabel = computed(() => (props.mode ? modeText[props.mode] : ''));
+
+const close = () => {
+  if (props.closeConfirm && !window.confirm('当前内容尚未保存，确认关闭？')) return;
+  emit('update:modelValue', false);
+  emit('close');
+};
 </script>
 
 <template>
@@ -22,7 +42,10 @@ const close = () => emit('update:modelValue', false);
       <button class="drawer-mask" aria-label="关闭抽屉" @click="close" />
       <aside class="drawer-panel" :style="{ width: width || '560px' }">
         <header class="drawer-header">
-          <h2>{{ title }}</h2>
+          <div class="drawer-title">
+            <h2>{{ title }}</h2>
+            <span v-if="modeLabel">{{ modeLabel }}</span>
+          </div>
           <BaseButton variant="ghost" size="sm" aria-label="关闭" @click="close">
             <template #icon><X /></template>
           </BaseButton>
@@ -30,7 +53,7 @@ const close = () => emit('update:modelValue', false);
         <main class="drawer-body">
           <slot />
         </main>
-        <footer v-if="$slots.footer" class="drawer-footer">
+        <footer v-if="$slots.footer" class="drawer-footer" :class="{ submitting: submitLoading }">
           <slot name="footer" />
         </footer>
       </aside>
@@ -72,9 +95,24 @@ const close = () => emit('update:modelValue', false);
   padding: 16px 18px;
 }
 
-.drawer-header h2 {
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-title h2 {
   margin: 0;
   font-size: 18px;
+}
+
+.drawer-title span {
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .drawer-body {
@@ -89,5 +127,10 @@ const close = () => emit('update:modelValue', false);
   gap: 10px;
   border-top: 1px solid var(--color-border);
   padding: 14px 18px;
+}
+
+.drawer-footer.submitting {
+  pointer-events: none;
+  opacity: 0.72;
 }
 </style>

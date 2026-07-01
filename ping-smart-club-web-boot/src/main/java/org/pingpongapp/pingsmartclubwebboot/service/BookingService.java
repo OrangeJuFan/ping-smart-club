@@ -2,6 +2,7 @@ package org.pingpongapp.pingsmartclubwebboot.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.pingpongapp.pingsmartclubwebboot.common.BusinessException;
+import org.pingpongapp.pingsmartclubwebboot.common.ErrorCode;
 import org.pingpongapp.pingsmartclubwebboot.dto.BookingDtos;
 import org.pingpongapp.pingsmartclubwebboot.mapper.BookingMapper;
 import org.pingpongapp.pingsmartclubwebboot.mapper.WaitlistEntryMapper;
@@ -65,20 +66,21 @@ public class BookingService {
 
     @Transactional
     public Booking createBooking(Long scheduleId, Long studentId, String source, String remark) {
-        CourseSchedule schedule = scheduleService.getById(scheduleId);
+        CourseSchedule schedule = scheduleService.getByIdForUpdate(scheduleId);
         if (!"SCHEDULED".equals(schedule.getStatus())) {
-            throw BusinessException.badRequest("课程安排不可预约");
+            throw BusinessException.of(ErrorCode.SCHEDULE_NOT_BOOKABLE);
         }
         studentService.getById(studentId);
         CourseProduct product = courseCatalogService.getProduct(schedule.getCourseProductId());
         lessonAccountService.assertEnough(studentId, product.getLessonCount());
         assertNoDuplicate(scheduleId, studentId);
         if (countBooked(scheduleId) >= schedule.getCapacity()) {
-            throw BusinessException.conflict("课程名额已满，可加入候补");
+            throw BusinessException.of(ErrorCode.BOOKING_CAPACITY_FULL);
         }
         Booking booking = new Booking();
         booking.setScheduleId(scheduleId);
         booking.setStudentId(studentId);
+        booking.setActiveKey(activeBookingKey(scheduleId, studentId));
         booking.setStatus("BOOKED");
         booking.setSource(source);
         booking.setRemark(remark);
@@ -91,7 +93,7 @@ public class BookingService {
 
     @Transactional
     public Booking joinWaitlist(Long scheduleId, Long studentId, String source, String remark) {
-        CourseSchedule schedule = scheduleService.getById(scheduleId);
+        CourseSchedule schedule = scheduleService.getByIdForUpdate(scheduleId);
         studentService.getById(studentId);
         assertNoDuplicate(scheduleId, studentId);
         if (countBooked(scheduleId) < schedule.getCapacity()) {
@@ -110,6 +112,7 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setScheduleId(scheduleId);
         booking.setStudentId(studentId);
+        booking.setActiveKey(activeBookingKey(scheduleId, studentId));
         booking.setStatus("WAITING");
         booking.setSource(source);
         booking.setRemark(remark);
@@ -122,13 +125,15 @@ public class BookingService {
 
     @Transactional
     public Booking cancel(Long bookingId, String reason) {
-        Booking booking = getById(bookingId);
+        Booking booking = getByIdForUpdate(bookingId);
         if (!"BOOKED".equals(booking.getStatus()) && !"WAITING".equals(booking.getStatus())) {
-            throw BusinessException.badRequest("当前预约状态不可取消");
+            throw BusinessException.of(ErrorCode.BOOKING_STATUS_INVALID, "当前预约状态不可取消");
         }
+        scheduleService.getByIdForUpdate(booking.getScheduleId());
         boolean releaseSeat = "BOOKED".equals(booking.getStatus());
         boolean cancelWaitlist = "WAITING".equals(booking.getStatus());
         booking.setStatus("CANCELLED");
+        booking.setActiveKey(null);
         booking.setCancelReason(reason);
         booking.setCanceledAt(LocalDateTime.now());
         bookingMapper.updateById(booking);
@@ -145,22 +150,25 @@ public class BookingService {
 
     @Transactional
     public Booking complete(Long bookingId, String remark) {
-        Booking booking = getById(bookingId);
+        Booking booking = getByIdForUpdate(bookingId);
         if (!"BOOKED".equals(booking.getStatus())) {
-            throw BusinessException.badRequest("只有已预约状态可以确认完成");
+            throw BusinessException.of(ErrorCode.BOOKING_STATUS_INVALID, "只有已预约状态可以确认完成");
         }
         CourseSchedule schedule = scheduleService.getById(booking.getScheduleId());
         CourseProduct product = courseCatalogService.getProduct(schedule.getCourseProductId());
         lessonAccountService.consume(booking.getStudentId(), bookingId, product.getLessonCount(), remark);
         booking.setStatus("COMPLETED");
+        booking.setActiveKey(null);
         booking.setCompletedAt(LocalDateTime.now());
         bookingMapper.updateById(booking);
         return booking;
     }
 
+    @Transactional
     public Booking markAbsent(Long bookingId, String remark) {
-        Booking booking = getById(bookingId);
+        Booking booking = getByIdForUpdate(bookingId);
         booking.setStatus("ABSENT");
+        booking.setActiveKey(null);
         booking.setRemark(remark);
         bookingMapper.updateById(booking);
         return booking;
@@ -169,7 +177,15 @@ public class BookingService {
     public Booking getById(Long bookingId) {
         Booking booking = bookingMapper.selectById(bookingId);
         if (booking == null) {
-            throw BusinessException.notFound("预约记录不存在");
+            throw BusinessException.of(ErrorCode.BOOKING_NOT_FOUND);
+        }
+        return booking;
+    }
+
+    private Booking getByIdForUpdate(Long bookingId) {
+        Booking booking = bookingMapper.selectByIdForUpdate(bookingId);
+        if (booking == null) {
+            throw BusinessException.of(ErrorCode.BOOKING_NOT_FOUND);
         }
         return booking;
     }
@@ -192,14 +208,14 @@ public class BookingService {
         Long count = bookingMapper.selectCount(new LambdaQueryWrapper<Booking>()
             .eq(Booking::getScheduleId, scheduleId)
             .eq(Booking::getStudentId, studentId)
-            .in(Booking::getStatus, List.of("BOOKED", "WAITING")));
+            .eq(Booking::getActiveKey, activeBookingKey(scheduleId, studentId)));
         if (count > 0) {
-            throw BusinessException.conflict("不能重复预约同一课程");
+            throw BusinessException.of(ErrorCode.BOOKING_DUPLICATE);
         }
     }
 
     private void promoteFirstWaitlist(Long scheduleId) {
-        CourseSchedule schedule = scheduleService.getById(scheduleId);
+        CourseSchedule schedule = scheduleService.getByIdForUpdate(scheduleId);
         if (countBooked(scheduleId) >= schedule.getCapacity()) {
             return;
         }
@@ -223,6 +239,7 @@ public class BookingService {
             return;
         }
         waitingBooking.setStatus("BOOKED");
+        waitingBooking.setActiveKey(activeBookingKey(scheduleId, entry.getStudentId()));
         bookingMapper.updateById(waitingBooking);
         entry.setStatus("PROMOTED");
         entry.setPromotedAt(LocalDateTime.now());
@@ -241,5 +258,9 @@ public class BookingService {
             entry.setStatus("CANCELLED");
             waitlistEntryMapper.updateById(entry);
         }
+    }
+
+    private String activeBookingKey(Long scheduleId, Long studentId) {
+        return scheduleId + ":" + studentId;
     }
 }
